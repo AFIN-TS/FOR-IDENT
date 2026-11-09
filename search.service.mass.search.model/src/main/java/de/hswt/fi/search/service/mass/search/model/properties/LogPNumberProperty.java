@@ -7,7 +7,7 @@ import de.hswt.fi.search.service.mass.search.model.Entry;
 import de.hswt.fi.search.service.mass.search.model.I18nKeys;
 import de.hswt.fi.search.service.mass.search.model.JpaPreferences;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.Objects;
 

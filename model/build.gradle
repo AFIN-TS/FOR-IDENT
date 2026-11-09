@@ -1,5 +1,6 @@
 dependencies {
-	compile project(":beans")
-	compile project(":common")
-	compile "org.springframework.boot:spring-boot-starter-web"
+	api libs.jackson.databind
+	api project(":beans")
+	api project(":common")
+	api libs.spring.boot.starter.web
 }

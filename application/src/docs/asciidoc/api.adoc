@@ -5,25 +5,43 @@
 :sectnumlevels: 3
 
 == Overview
-The following describes the resources that make up the official DuftSTOFF-IDENT API.
-If you have any suggestions or problems, feel free to link:mailto:gilg@hswt.de?subject=API[contact us].
+The REST API gives read-only access to the substances of the public databases (STOFF-IDENT, PLANT-IDENT,
+...). It needs no login.
+
+The complete, always current description is generated from the code (since version 3.0):
+
+* *Swagger UI* (try the requests in the browser): `/api/docs`
+* *OpenAPI document* (JSON, for client generators): `/api/openapi`
+
+This page summarises the endpoints. If you have suggestions or problems, please contact the operator of the site.
 
 == General
-The API is available over HTTPS only.
-
-All content is served as JSON UTF-8.
-
-Empty values are declared as null and not ommited.
+The API is available over HTTPS only. All content is served as JSON (UTF-8). Empty values are returned as `null`,
+not omitted.
 
 == Pagination
-Requests that return more than one item will be paginated to 100 results by default.
-You can specify furher pages with the page parameter.
-It is also possible to specify the page size using the size parameter.
+The list endpoints are paged *per database*: `page` (0-based) and `size` (default 100) apply to each database, and the
+pages of all databases are combined in one response. Its `content` can therefore hold up to `size` items per
+database; `size` of the combined response is 0.
+
+== Errors
+Errors are answered without a body:
+
+[cols="1,5"]
+|===
+|Status |Reason
+
+|400
+|A mass range wider than 200 Da, more than 100 IDs, or an invalid parameter value
+
+|401
+|`GET /api/substances` without one of the search parameter sets (as in all earlier versions)
+
+|404
+|Unknown path
+|===
 
 == Endpoint Overview
-This sections gives a brief overview of all available endpoints.
-
-For detailed information see the relevant sections.
 
 .Overview of the available endpoints
 [cols="1,5,5"]
@@ -31,146 +49,81 @@ For detailed information see the relevant sections.
 |Method |URL |Brief description
 
 |GET
-|/api/categories
-|Returns a list of all categories. Every entry is associated with one or more category
-
-|GET
 |/api/substances/inchiKeys
-|Returns a list of all Inchi Keys from the database
+|InChI keys of all substances (paged)
 
 |GET
 |/api/substances/ids
-|Returns a list of all STOFF-IDENT ids from the database. Every entry is associated
-with exactly one STOFF-IDENT id
+|IDs of all substances, e.g. `SI…` (STOFF-IDENT), `PI…` (PLANT-IDENT) (paged)
 
 |GET
-|/api/substances/inchiKeysAndStoffidentIds
-|Returns a tuple containing a combination of Inchi Key and STOFF-IDENT ids
-
-|GET
-|/api/substances?elementalFormula=C16H12Cl2N4O4
-|Returns a list of entries matching the given formula
-
-|GET
-|/api/substances?accurateMassMin=100&accurateMassMax=200
-|Returns a list of entries matching the given formula
-
-|GET
-|/api/substances?id=SI00000001&id=SI00000002&id=PI00000001&id=PI00000002
-|Returns an entry for each of the matching ids
+|/api/substances/inchiKeysAndIds
+|Pairs of InChI key and ID of all substances (paged)
 
 |GET
 |/api/substances?inchiKey=VEQOALNAAJBPNY-UHFFFAOYSA-N
-|Returns the entry for the given Inchi Key if it exists
+|The substance with the given InChI key, one entry per database that contains it
+
+|GET
+|/api/substances?id=SI00000528&id=PI00000001
+|Substances by ID; at most 100 IDs, IDs without a substance are left out (a list, not a page)
+
+|GET
+|/api/substances?elementalFormula=C11H12N2O
+|Substances whose formula *contains* the given text (C11H12N2O also finds C11H12N2O2) (paged)
+
+|GET
+|/api/substances?accurateMassMin=188.09&accurateMassMax=188.10
+|Substances in the monoisotopic mass range, at most 200 Da wide (paged)
 |===
 
-=== List last update
-List the date of the last data update. The Date is formatted in the following
-format: YYYY-DD-MM
+== Examples
 
-include::{snippets}/list-last-update-time/curl-request.adoc[]
-include::{snippets}/list-last-update-time/http-request.adoc[]
+=== List all InChI keys
 
-==== Response
+----
+$ curl 'https://for-ident.example.org/api/substances/inchiKeys?page=0&size=2'
+----
 
-include::{snippets}/list-last-update-time/http-response.adoc[]
+----
+{"content":["FDMFUZHCIRHGRG-UHFFFAOYSA-N","RXYPXQSKLGGKOL-UHFFFAOYSA-N","KDXKERNSBIXSRK-UHFFFAOYSA-N", ...],
+ "pageable":"INSTANCE","size":0,"last":true,"totalElements":8,"totalPages":1,"number":0,
+ "sort":{"empty":true,"unsorted":true,"sorted":false},"first":true,"numberOfElements":8,"empty":false}
+----
 
-=== List all Inchi Keys
-List all Inchi Keys. If no Inchi Key is present null is returned
+Two keys per database; the four databases give 8 keys.
 
-include::{snippets}/inchi-keys-root-entry-point-is-available/curl-request.adoc[]
-include::{snippets}/inchi-keys-root-entry-point-is-available/http-request.adoc[]
+=== List all InChI keys with their IDs
 
-==== Parameter
-include::{snippets}/inchi-keys-root-entry-point-is-available/request-parameters.adoc[]
+----
+$ curl 'https://for-ident.example.org/api/substances/inchiKeysAndIds?size=1'
+----
 
-==== Response
+----
+{"content":[["FDMFUZHCIRHGRG-UHFFFAOYSA-N","SI00010279"],["KDXKERNSBIXSRK-UHFFFAOYSA-N","PI00001151"], ...], ...}
+----
 
-include::{snippets}/inchi-keys-root-entry-point-is-available/http-response.adoc[]
+=== Substance by InChI key
 
-=== List all STOFF-IDENT Ids
-List all STOFF-IDENT Ids. If no STOFF-IDENT Id is present null is returned
+----
+$ curl 'https://for-ident.example.org/api/substances?inchiKey=VEQOALNAAJBPNY-UHFFFAOYSA-N'
+----
 
-include::{snippets}/stoffident-ids-root-entry-point-is-available/curl-request.adoc[]
-include::{snippets}/stoffident-ids-root-entry-point-is-available/http-request.adoc[]
+----
+{"content":[{"inchi":"InChI=1S/C11H12N2O/c1-9-8-11(14)13(12(9)2)10-6-4-3-5-7-10/h3-8H,1-2H3",
+  "inchiKey":"VEQOALNAAJBPNY-UHFFFAOYSA-N","monoisotopicMass":"188.095","elementalFormula":"C11H12N2O",
+  "identifer":"SI00000528","name":"phenazone","datasourceName":"STOFF-IDENT"}], ...}
+----
 
-==== Parameter
-include::{snippets}/stoffident-ids-root-entry-point-is-available/request-parameters.adoc[]
+The ID field is called `identifer` (sic) for compatibility with existing clients.
 
-==== Response
+=== Substances by ID
 
-include::{snippets}/stoffident-ids-root-entry-point-is-available/http-response.adoc[]
+----
+$ curl 'https://for-ident.example.org/api/substances?id=SI00000528'
+----
 
-=== List all Inchi Keys and STOFF-IDENT Ids
-Return a list of tuples, where each tuple contains the STOFF-IDENT Id and
-corresponding Inchi Key. If one of the values is missing, null is returned
-
-include::{snippets}/inchi-keys-and-stoffident-ids-root-entry-point-is-available/curl-request.adoc[]
-include::{snippets}/inchi-keys-and-stoffident-ids-root-entry-point-is-available/http-request.adoc[]
-
-==== Parameter
-include::{snippets}/inchi-keys-and-stoffident-ids-root-entry-point-is-available/request-parameters.adoc[]
-
-==== Response
-
-include::{snippets}/inchi-keys-and-stoffident-ids-root-entry-point-is-available/http-response.adoc[]
-
-=== List Substances by elemental formula
-
-List all substances matching for the given formula
-
-include::{snippets}/list-substance-by-elemental-formula/curl-request.adoc[]
-include::{snippets}/list-substance-by-elemental-formula/http-request.adoc[]
-
-==== Parameter
-include::{snippets}/list-substance-by-elemental-formula/request-parameters.adoc[]
-
-==== Response
-
-include::{snippets}/list-substance-by-elemental-formula/http-response.adoc[]
-
-=== List Substances by mass range
-
-List all substances matching the given mass range. The range between
-accurateMassMin and accurateMassMax must not be greater than 200.
-If no entry is present null is returned
-
-include::{snippets}/list-substance-by-mass-range/curl-request.adoc[]
-include::{snippets}/list-substance-by-mass-range/http-request.adoc[]
-
-==== Parameter
-include::{snippets}/list-substance-by-mass-range/request-parameters.adoc[]
-
-==== Response
-
-include::{snippets}/list-substance-by-mass-range/http-response.adoc[]
-
-=== List Substances by STOFF-IDENT Ids
-
-List all substances matching the given STOFF-IDENT Ids.
-If no entry with the given Id is present null is returned
-
-include::{snippets}/list-substance-by-stoffident-id/curl-request.adoc[]
-include::{snippets}/list-substance-by-stoffident-id/http-request.adoc[]
-
-==== Parameter
-include::{snippets}/list-substance-by-stoffident-id/request-parameters.adoc[]
-
-==== Response
-
-include::{snippets}/list-substance-by-stoffident-id/http-response.adoc[]
-
-=== List Substances by Inchi Key
-
-List the substance with the given Inchi Key.
-If no entry with the given Inchi Key is present null is returned
-
-include::{snippets}/list-substance-by-inchi-key/curl-request.adoc[]
-include::{snippets}/list-substance-by-inchi-key/http-request.adoc[]
-
-==== Parameter
-include::{snippets}/list-substance-by-inchi-key/request-parameters.adoc[]
-
-==== Response
-
-include::{snippets}/list-substance-by-inchi-key/http-response.adoc[]
+----
+[{"inchi":"InChI=1S/C11H12N2O/...","inchiKey":"VEQOALNAAJBPNY-UHFFFAOYSA-N","monoisotopicMass":"188.095",
+  "elementalFormula":"C11H12N2O","identifer":"SI00000528","name":"phenazone","datasourceName":"STOFF-IDENT"}]
+----

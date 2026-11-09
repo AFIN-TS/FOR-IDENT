@@ -1,4 +1,4 @@
 dependencies {
-	compile project(":common")
-	compile project(":search.service.mass.search.model")
+	api project(":common")
+	api project(":search.service.mass.search.model")
 }

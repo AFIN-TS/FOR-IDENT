@@ -1,5 +1,8 @@
 package de.hswt.fi.fileimport.service.xml;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import de.hswt.fi.common.FileUtil;
 import de.hswt.fi.common.SearchUtil;
 import de.hswt.fi.fileimport.service.api.FileBasedFeatureContentImporter;
@@ -11,9 +14,7 @@ import de.hswt.fi.model.FeatureSet;
 import de.hswt.fi.model.Peak;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -32,19 +33,19 @@ public class CefFeatureContentImporter implements FileBasedFeatureContentImporte
 
 	private static final int PPM_PEAKS = 10;
 
-	private final MappingJackson2XmlHttpMessageConverter xmlConverter;
-
-	@Autowired
-	public CefFeatureContentImporter(MappingJackson2XmlHttpMessageConverter xmlConverter) {
-		this.xmlConverter = xmlConverter;
-	}
+	// Jackson 2 with the settings of the XML converter of Spring Boot 2.7 that was used before (SP-10: Spring Boot 4
+	// only provides Jackson 3)
+	private final XmlMapper xmlMapper = XmlMapper.builder()
+			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+			.disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
+			.build();
 
 	@Override
 	public FeatureSet importFromFile(Path contentPath) {
 
 		CefFile cefFile;
 		try {
-			cefFile = xmlConverter.getObjectMapper().readValue(contentPath.toFile(), CefFile.class);
+			cefFile = xmlMapper.readValue(contentPath.toFile(), CefFile.class);
 		} catch (IOException e) {
 			LOGGER.error("Can not parse given content as XML {}", e);
 			return null;

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,7 +67,7 @@ public class CombinedMetFragProcess implements Runnable {
 	 */
 	boolean retrieveCompounds(List<String> identifiers) throws Exception {
 		this.processes = null;
-		Vector<String> databaseCandidateIdentifiers = this.database.getCandidateIdentifiers(identifiers);
+		ArrayList<String> databaseCandidateIdentifiers = this.database.getCandidateIdentifiers(identifiers);
 		if(this.globalSettings.containsKey(VariableNames.MAXIMUM_CANDIDATE_LIMIT_TO_STOP_NAME) && this.globalSettings.get(VariableNames.MAXIMUM_CANDIDATE_LIMIT_TO_STOP_NAME) != null) {
 			int limit = (Integer)this.globalSettings.get(VariableNames.MAXIMUM_CANDIDATE_LIMIT_TO_STOP_NAME);
 			if(limit < databaseCandidateIdentifiers.size()) {
@@ -165,6 +165,16 @@ public class CombinedMetFragProcess implements Runnable {
 			 * check whether the single run was successful
 			 */
 			if(scmfp.wasSuccessful()) {
+				// MetFrag 2.6: the final scores are calculated and assigned here, after all candidates were processed
+				try {
+					scmfp.singlePostCalculateScores();
+					scmfp.assignScores();
+				} catch (Exception e) {
+					// MetFrag itself stops the whole evaluation here; only this candidate is left out
+					LOGGER.error("Error when scoring candidate {}", scmfp.getScoredPrecursorCandidate().getIdentifier(), e);
+					scmfp.getFragmenterAssignerScorer().nullifyScoresCollection();
+					continue;
+				}
 				numberCandidatesProcessed++;
 				ICandidate[] candidates = scmfp.getScoredPrecursorCandidates();
 				for (ICandidate candidate : candidates) scoredCandidateList.addElement(candidate);
@@ -308,9 +318,9 @@ public class CombinedMetFragProcess implements Runnable {
 		Settings settings = new Settings();
 		settings.set(VariableNames.LOCAL_DATABASE_PATH_NAME, path);
 		LocalPropertyFileDatabase propertyDatabase = new LocalPropertyFileDatabase(settings);
-		Vector<String> externalInChIKeys = new Vector<>();
-		Vector<String> externalPropertiesDefined = new Vector<>();
-		Vector<String> ids;
+		ArrayList<String> externalInChIKeys = new ArrayList<>();
+		ArrayList<String> externalPropertiesDefined = new ArrayList<>();
+		ArrayList<String> ids;
 		try {
 			ids = propertyDatabase.getCandidateIdentifiers();
 		} catch(Exception e) {

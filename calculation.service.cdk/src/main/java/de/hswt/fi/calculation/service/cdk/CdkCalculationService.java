@@ -98,8 +98,8 @@ public class CdkCalculationService implements CalculationService {
 		IAtomContainer substance;
 		try {
 			substance = smilesParser.parseSmiles(smiles);
-		} catch (Exception e) {
-			LOGGER.error("An error occured inside getSmilesAsImage : {}", e.getMessage());
+		} catch (InvalidSmilesException e) {
+			LOGGER.error("An error occured inside getSmilesAsImage", e);
 			return new byte[0];
 		}
 		StructureDiagramGenerator sdg = new StructureDiagramGenerator();

@@ -5,8 +5,8 @@ import de.hswt.fi.model.RTICalibrationData;
 import de.hswt.filehandler.api.MainReader;
 import de.hswt.filehandler.excel.ExcelInspector;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExcelImportCalibrationTest {
 
@@ -27,7 +27,7 @@ public class ExcelImportCalibrationTest {
 	
 	private ArrayList<RTICalibrationData> data;
 	
-	@Before
+	@BeforeEach
 	public void setupReferenceData() {
 
 		calibrationReader = new CalibrationExcelReaderLC();

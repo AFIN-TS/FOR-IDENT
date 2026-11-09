@@ -1,5 +1,5 @@
 dependencies {
-    compile project(":search.service.mass.search.model")
-    compile project(":search.service.index.model")
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    api project(":search.service.mass.search.model")
+    api project(":search.service.index.model")
+    api libs.spring.boot.starter.data.jpa
 }

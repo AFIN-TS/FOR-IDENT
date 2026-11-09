@@ -1,6 +1,9 @@
 package de.hswt.fi.fileimport.service.json;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.hswt.fi.model.FeatureSet;
 import org.slf4j.Logger;
@@ -21,7 +24,16 @@ public class JsonReader {
 
 	private ObjectMapper objectMapper;
 
+	// Jackson 2 with the settings of the ObjectMapper of Spring Boot 2.7 that was injected before (SP-10: Spring Boot 4
+	// only provides Jackson 3)
 	@Autowired
+	public JsonReader() {
+		this(JsonMapper.builder()
+				.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+				.disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
+				.build());
+	}
+
 	public JsonReader(ObjectMapper objectMapper) {
 		this.objectMapper = Objects.requireNonNull(objectMapper);
 		addDeserializer();

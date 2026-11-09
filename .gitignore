@@ -162,7 +162,12 @@ rebel.xml
 
 *.factorypath
 
-*.gitignore
-
 gwt-unitCache/
-de.hswt.fi.ui.vaadin/src/main/webapp/
+# Output of the Vaadin widgetset/theme compile (the packaged widgetset lives in ui.vaadin/src/main/resources)
+ui.vaadin/src/main/webapp/
+
+# Local secrets and environment files (credentials must never be committed)
+.env
+*.env
+application-local.properties
+application-*-local.properties

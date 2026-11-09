@@ -21,7 +21,7 @@ public class Feature implements Serializable {
     private static final Double DEFAULT_RELATIVE_FACTOR = 0.0;
 
     @BeanColumn(i18nId = I18nKeys.FEATURE_IDENTIFIER, selector = true)
-    private final String identifier;
+    private String identifier;
 
     @BeanColumn(i18nId = I18nKeys.FEATURE_PRECURSOR_MASS, format = "%.4f", selector = true)
     private Double precursorMass;
@@ -48,6 +48,9 @@ public class Feature implements Serializable {
 
     private List<Peak> peaks;
 
+    // Peaks used for MS/MS processing (peaks below the intensity threshold removed), the original peaks are kept
+    private List<Peak> usedPeaks;
+
     private Double relativeFactor;
 
     private Feature(Builder builder) {
@@ -61,11 +64,20 @@ public class Feature implements Serializable {
         this.neutralFormula = builder.neutralFormula;
         this.massCalculated = builder.massCalculated;
         this.peaks = builder.peaks;
+        this.usedPeaks = builder.peaks;
         this.relativeFactor = builder.relativeFactor;
     }
 
     public String getIdentifier() {
         return identifier;
+    }
+
+    /**
+     * Only used by the import to make duplicate identifiers unique, the processing relies on unique
+     * feature identifiers.
+     */
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public Double getRetentionTimeIndex() {
@@ -104,6 +116,11 @@ public class Feature implements Serializable {
         return massCalculated;
     }
 
+    /** Whether the mass calculated from the formula is used instead of the precursor m/z (setting of the run). */
+    public void setMassCalculated(boolean massCalculated) {
+        this.massCalculated = massCalculated;
+    }
+
     public void setPrecursorMass(Double precursorMass) {
         this.precursorMass = precursorMass;
     }
@@ -138,6 +155,14 @@ public class Feature implements Serializable {
         this.peaks = peaks;
     }
 
+    public List<Peak> getUsedPeaks() {
+        return usedPeaks;
+    }
+
+    public void setUsedPeaks(List<Peak> usedPeaks) {
+        this.usedPeaks = usedPeaks;
+    }
+
     public Double getRelativeFactor() {
         return relativeFactor;
     }
@@ -161,13 +186,14 @@ public class Feature implements Serializable {
                 Objects.equals(formulaDerivedMass, feature.formulaDerivedMass) &&
                 Objects.equals(neutralMass, feature.neutralMass) &&
                 Objects.equals(peaks, feature.peaks) &&
+                Objects.equals(usedPeaks, feature.usedPeaks) &&
                 Objects.equals(relativeFactor, feature.relativeFactor);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(identifier, precursorMass, neutralFormula, retentionTimeIndex, retentionTime, retentionTimeSignal,
-                formulaDerivedMass, neutralMass, massCalculated, peaks, relativeFactor);
+                formulaDerivedMass, neutralMass, massCalculated, peaks, usedPeaks, relativeFactor);
     }
 
     @Override
@@ -193,6 +219,8 @@ public class Feature implements Serializable {
         builder.append(massCalculated);
         builder.append(", peaks=");
         builder.append(peaks);
+        builder.append(", usedPeaks=");
+        builder.append(usedPeaks);
         builder.append(", relativeFactor=");
         builder.append(relativeFactor);
         builder.append("]");

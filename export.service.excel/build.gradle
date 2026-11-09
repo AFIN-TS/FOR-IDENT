@@ -1,6 +1,6 @@
 dependencies {
-	compile project(":beans")
-	compile project(":calculation.service.api")
-	compile "org.springframework.boot:spring-boot-starter-validation"
-	compile "org.apache.poi:poi-ooxml"
+	api project(":beans")
+	api project(":calculation.service.api")
+	api libs.spring.boot.starter.validation
+	api libs.poi.ooxml
 }

@@ -1,0 +1,2 @@
+// Standalone build of MetFragLib (https://github.com/ipb-halle/MetFragRelaunched), see build.gradle
+rootProject.name = "MetFragLib"

@@ -1,8 +1,8 @@
 dependencies {
-	compile project(":application.properties")
-	compile project(":search.service.mass.search.model")
+	api project(":application.properties")
+	api project(":search.service.mass.search.model")
 
-	compile "org.springframework.boot:spring-boot-starter-mail"
-	compile "org.springframework.boot:spring-boot-starter-validation"
-	compile "org.springframework.boot:spring-boot-starter-freemarker"
+	api libs.spring.boot.starter.mail
+	api libs.spring.boot.starter.validation
+	api libs.spring.boot.starter.freemarker
 }

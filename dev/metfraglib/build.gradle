@@ -1,0 +1,73 @@
+// Builds libraries/metfrag/MetFragLib-<version>.jar from the source of a MetFragRelaunched release
+// (MetFrag is not published to Maven Central). Only the classes: FOR-IDENT uses the FragmenterScore,
+// the large data files of the other scores (MoNA spectra, annotation lists) are not included.
+//
+//   gradlew -p dev/metfraglib jar -PmetfragSource=<unpacked MetFragRelaunched-2.6.11>
+//
+// dev/build-metfraglib.ps1 downloads the release archive (checked by SHA-256) and runs this build.
+
+plugins {
+	id "java-library"
+}
+
+version = "2.6.11"
+
+def cdkVersion = "2.11"
+
+java {
+	toolchain {
+		// MetFragRelaunched targets Java 21; its code compiles for Java 17, the Java version of FOR-IDENT
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+def metfragSource = file(findProperty("metfragSource") ?: "metfrag-source-missing")
+
+sourceSets {
+	main {
+		java.srcDirs = [new File(metfragSource, "MetFragLib/src/main/java")]
+		resources.srcDirs = []
+	}
+}
+
+// Dependencies of MetFragLib (MetFragLib/pom.xml of the release); FOR-IDENT declares those it needs at runtime
+dependencies {
+	compileOnly "org.apache.httpcomponents.client5:httpclient5:5.5"
+	compileOnly "org.apache.commons:commons-csv:1.14.1"
+	compileOnly "commons-io:commons-io:2.21.0"
+	compileOnly "org.openscience.cdk:cdk-inchi:$cdkVersion"
+	compileOnly "org.openscience.cdk:cdk-legacy:$cdkVersion"
+	compileOnly "org.openscience.cdk:cdk-renderawt:$cdkVersion"
+	compileOnly "org.openscience.cdk:cdk-sdg:$cdkVersion"
+	compileOnly "org.openscience.cdk:cdk-qsarmolecular:$cdkVersion"
+	compileOnly "org.openscience.cdk:cdk-silent:$cdkVersion"
+	compileOnly "com.googlecode.json-simple:json-simple:1.1.1"
+	compileOnly "org.postgresql:postgresql:42.7.8"
+	compileOnly "com.mysql:mysql-connector-j:9.4.0"
+	compileOnly "net.sourceforge.jexcelapi:jxl:2.6.12"
+	compileOnly "org.dom4j:dom4j:2.2.0"
+	compileOnly "com.apporiented:hierarchical-clustering:1.2.0"
+	compileOnly "net.rforge:Rserve:0.6-8.1"
+	compileOnly "org.apache.logging.log4j:log4j-api:2.25.1"
+	// only Configurator.setLevel(); FOR-IDENT provides a no-op replacement (msms.service.metfrag), Logback logs
+	compileOnly "org.apache.logging.log4j:log4j-core:2.25.1"
+	compileOnly "org.openjdk.nashorn:nashorn-core:15.7"
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = "UTF-8"
+	options.compilerArgs << "-nowarn"
+}
+
+tasks.named("jar") {
+	archiveFileName = "MetFragLib-${project.version}.jar"
+	destinationDirectory = rootProject.file("../../libraries/metfrag")
+	manifest {
+		attributes("Implementation-Title": "MetFragLib", "Implementation-Version": project.version,
+				"Implementation-Vendor": "IPB Halle (MetFragRelaunched), built for FOR-IDENT")
+	}
+}

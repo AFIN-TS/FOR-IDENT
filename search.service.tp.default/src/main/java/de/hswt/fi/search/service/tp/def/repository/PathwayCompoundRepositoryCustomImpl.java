@@ -4,6 +4,7 @@ import de.hswt.fi.search.service.tp.model.MatchingPathway;
 import de.hswt.fi.search.service.tp.model.Pathway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.GroupOperation;
@@ -17,6 +18,8 @@ import java.util.List;
 import static de.hswt.fi.search.service.tp.def.config.PathwayDatabaseConfiguration.MONGO_TEMPLATE;
 
 @Component
+// Needs the pathway database (SP-16)
+@ConditionalOnProperty(name = "spring.datasource.pathway.enabled", havingValue = "true")
 public class PathwayCompoundRepositoryCustomImpl implements PathwayCompoundRepositoryCustom {
 
 	private final MongoTemplate mongoTemplate;

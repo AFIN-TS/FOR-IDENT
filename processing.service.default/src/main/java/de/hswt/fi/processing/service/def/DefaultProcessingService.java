@@ -29,6 +29,7 @@ import de.hswt.fi.search.service.tp.model.TransformationProductSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,10 @@ public class DefaultProcessingService implements ProcessingService {
 	private Consumer<ProcessingUnitState> stateUpdateCallback;
 	private ProcessResultSummary resultSummary;
 	private ProcessingSettings settings;
+
+	// Transformation products need the pathway database (MongoDB), it can be switched off
+	@Value("${spring.datasource.pathway.enabled}")
+	private boolean tpEnabled;
 
 	@Override
 	public ProcessingResult executeJob(ProcessingJob job, Consumer<ProcessingUnitState> stateUpdateCallback) {
@@ -132,7 +137,7 @@ public class DefaultProcessingService implements ProcessingService {
 			order.add(ProcessingUnit.MSMS);
 		}
 
-		if (settings.getScoreSettings().getTpState().isExecute()) {
+		if (tpEnabled && settings.getScoreSettings().getTpState().isExecute()) {
 			order.add(ProcessingUnit.TP);
 		}
 
@@ -260,6 +265,8 @@ public class DefaultProcessingService implements ProcessingService {
 		IndexSettings indexSettings = new IndexSettings();
 		indexSettings.setIonisation(job.getSettings().getIonisation());
 		indexSettings.setPpm(job.getSettings().getPrecursorPpm());
+		indexSettings.setPh(job.getSettings().getPh());
+		indexSettings.setStationaryPhase(job.getSettings().getStationaryPhase());
 
 		IndexJob indexJob = new IndexJob(indexSettings, job.getFeatureSet());
 
@@ -485,7 +492,7 @@ public class DefaultProcessingService implements ProcessingService {
 	}
 
 	private boolean isTpPossible() {
-		return true;
+		return tpEnabled;
 	}
 
 	private boolean isMsMsPossible(ProcessingJob job) {
@@ -520,7 +527,9 @@ public class DefaultProcessingService implements ProcessingService {
 				job.getFeatureSet().getFeatures().stream()
 						.anyMatch(f -> !f.getPeaks().isEmpty()));
 
-		job.getSettings().getScoreSettings().getTpState().setDataAvailable(true);
+		if (job.getSettings().getScoreSettings().getTpState() != null) {
+			job.getSettings().getScoreSettings().getTpState().setDataAvailable(true);
+		}
 
 		job.getSettings().getScoreSettings().getMassBankSimpleState().setDataAvailable(true);
 	}
@@ -564,7 +573,8 @@ public class DefaultProcessingService implements ProcessingService {
 		this.msmsService = msmsService;
 	}
 
-	@Autowired
+	// Only present with the pathway database (FI_PATHWAY_ENABLED, SP-16)
+	@Autowired(required = false)
 	public void setTpService(TransformationProductSearchService tpService) {
 		this.tpService = tpService;
 	}

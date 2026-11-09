@@ -1,4 +1,5 @@
 dependencies {
-	compile project(":search.service.search.api")
-	compile "org.springframework.boot:spring-boot-starter-web"
+	api project(":search.service.search.api")
+	api libs.spring.boot.starter.web
+	implementation libs.springdoc.openapi.webmvc.ui
 }

@@ -1,0 +1,31 @@
+# Reverse proxy for FOR-IDENT with TLS (SP-16): Caddy gets and renews the Let's Encrypt certificate itself.
+# Plain Caddy on the host: add these blocks to /etc/caddy/Caddyfile. With caddy-docker-proxy
+# use docker-compose.override.example.yml in this folder instead; both describe the same configuration.
+#
+# FOR-IDENT listens on port 8080 without TLS; the firewall lets only the reverse proxy reach it. With Caddy in Docker
+# the upstream is host.docker.internal:8080 and ufw must allow the Docker network to port 8080 (deploy/README.md).
+
+for-ident.example.org {
+	# Uploads of the molecular screening: up to 15 MB per file (UploadDialog.MAX_FILE_SIZE) plus some margin
+	request_body {
+		max_size 20MB
+	}
+	reverse_proxy 127.0.0.1:8080 {
+		# Marks the application as down while it starts or if it fails (503 instead of a hanging request)
+		health_uri /actuator/health
+		health_interval 30s
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	encode zstd gzip
+	# Access log in the journal of Caddy; the IP addresses are kept as long as journald keeps the log (7 days)
+	log
+}
+
+www.for-ident.example.org {
+	redir https://for-ident.example.org{uri} permanent
+}

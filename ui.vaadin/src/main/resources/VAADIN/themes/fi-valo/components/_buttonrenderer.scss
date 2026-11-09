@@ -1,8 +1,0 @@
-@mixin button-renderer ($primary-stylename: v-nativebutton) {
-
-	.#{$primary-stylename} {
-		background-color:lightgray;
-		border:1px solid white;
-		cursor:pointer;
-	}
-}

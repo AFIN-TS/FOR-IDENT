@@ -1,3 +1,10 @@
 dependencies {
-	compile project(":security.service.model")
+	api project(":security.service.model")
 }
+
+apply from: "$rootDir/gradle/eclipselink-weaving.gradle"
+ext.eclipselinkReferencedEntities = [
+	"de.hswt.fi.security.service.model.RegisteredUser",
+	"de.hswt.fi.security.service.model.Group",
+	"de.hswt.fi.security.service.model.Database"
+]

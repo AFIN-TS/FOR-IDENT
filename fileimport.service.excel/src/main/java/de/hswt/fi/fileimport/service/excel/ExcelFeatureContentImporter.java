@@ -7,8 +7,7 @@ import de.hswt.fi.model.RTICalibrationData;
 import de.hswt.filehandler.api.MainReader;
 import de.hswt.filehandler.excel.ExcelInspector;
 import de.hswt.filehandler.excel.ExcelReader;
-import org.apache.poi.POIXMLDocument;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.poifs.filesystem.FileMagic;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,9 +84,9 @@ public class ExcelFeatureContentImporter
 
 	@Override
 	public boolean canHandle(Path path) {
-		try {
-			return POIXMLDocument.hasOOXMLHeader(new BufferedInputStream( new FileInputStream(path.toFile()))) ||
-					POIFSFileSystem.hasPOIFSHeader(new BufferedInputStream( new FileInputStream(path.toFile())));
+		try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(path.toFile()))) {
+			FileMagic magic = FileMagic.valueOf(is);
+			return magic == FileMagic.OOXML || magic == FileMagic.OLE2;
 		} catch (IOException e) {
 			LOGGER.error("An error occured",e);
 		}

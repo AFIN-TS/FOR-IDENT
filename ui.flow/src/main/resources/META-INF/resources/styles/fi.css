@@ -1,0 +1,480 @@
+/* FOR-IDENT look on top of the Lumo theme (SP-11): the blue of the FOR-IDENT logo and of the original Vaadin 8
+   theme (#0058BC) as primary colour, white text on it; links and highlights on white use the same blue. */
+html {
+	--fi-primary: #0058bc;
+	--fi-primary-dark: #003f87;
+	--fi-on-primary: #ffffff;
+	--lumo-primary-color: var(--fi-primary);
+	--lumo-primary-color-50pct: rgba(0, 88, 188, 0.5);
+	--lumo-primary-color-10pct: rgba(0, 88, 188, 0.12);
+	--lumo-primary-contrast-color: var(--fi-on-primary);
+	--lumo-primary-text-color: var(--fi-primary);
+	--lumo-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Drawer: header with the application name, sections, last data update at the bottom */
+.fi-drawer {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.fi-brand {
+	display: flex;
+	align-items: center;
+	gap: var(--lumo-space-s);
+	padding: var(--lumo-space-m);
+	background: var(--fi-primary);
+	color: var(--fi-on-primary);
+	border-bottom: 4px solid var(--fi-primary-dark);
+}
+
+.fi-brand h1 {
+	font-size: var(--lumo-font-size-xl);
+	margin: 0;
+	color: var(--fi-on-primary);
+	letter-spacing: 0.02em;
+}
+
+.fi-user-area {
+	padding: var(--lumo-space-s) var(--lumo-space-m);
+	border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+.fi-user-name {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fi-nav {
+	flex: 1;
+	overflow: auto;
+	padding: var(--lumo-space-s) 0;
+}
+
+.fi-drawer-footer {
+	padding: var(--lumo-space-m);
+	font-size: var(--lumo-font-size-s);
+	color: var(--lumo-secondary-text-color);
+	border-top: 1px solid var(--lumo-contrast-10pct);
+}
+
+.fi-drawer-footer strong {
+	color: var(--lumo-body-text-color);
+}
+
+.fi-language button[aria-pressed="true"] {
+	font-weight: 700;
+	color: var(--fi-primary-dark);
+}
+
+/* Navbar */
+.fi-navbar-title {
+	font-size: var(--lumo-font-size-l);
+	margin: 0;
+	flex: 1;
+}
+
+.fi-navbar-logo {
+	height: 40px;
+	margin-right: var(--lumo-space-m);
+}
+
+/* Login and password pages */
+.fi-login-page {
+	min-height: 100%;
+	background: linear-gradient(160deg, var(--lumo-contrast-5pct), var(--lumo-base-color));
+}
+
+.fi-login-logo {
+	width: 12.5rem;
+	align-self: flex-end;
+	margin: var(--lumo-space-m);
+}
+
+.fi-login-links {
+	display: flex;
+	gap: var(--lumo-space-m);
+	justify-content: center;
+}
+
+.fi-login-browsers {
+	font-size: var(--lumo-font-size-xs);
+	color: var(--lumo-secondary-text-color);
+	align-self: flex-end;
+	margin: var(--lumo-space-m);
+}
+
+.fi-card {
+	background: var(--lumo-base-color);
+	border-radius: var(--lumo-border-radius-l);
+	box-shadow: var(--lumo-box-shadow-m);
+	padding: var(--lumo-space-l);
+	max-width: 28rem;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Cookie notice at the bottom of the page, as in the Vaadin 8 UI */
+.fi-cookie-consent {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--lumo-space-m);
+	padding: var(--lumo-space-s) var(--lumo-space-m);
+	background: var(--fi-primary);
+	color: var(--fi-on-primary);
+}
+
+.fi-cookie-consent vaadin-button {
+	background: white;
+	color: var(--fi-primary-dark);
+}
+
+/* Home page: the static HTML page fills the view */
+.fi-home-frame {
+	border: none;
+	width: 100%;
+	height: 100%;
+}
+
+/* Search views (SP-12): panels with a blue header line, as the panels of the Vaadin 8 UI */
+.fi-search-view {
+	padding: var(--lumo-space-s);
+	box-sizing: border-box;
+}
+
+.fi-panel {
+	background: var(--lumo-base-color);
+	border: 1px solid var(--lumo-contrast-10pct);
+	border-radius: var(--lumo-border-radius-m);
+	overflow: hidden;
+	min-height: 0;
+}
+
+.fi-panel-header {
+	padding: var(--lumo-space-xs) var(--lumo-space-s);
+	border-bottom: 3px solid var(--fi-primary);
+	background: var(--lumo-contrast-5pct);
+	gap: var(--lumo-space-xs);
+}
+
+.fi-panel-header h3 {
+	font-size: var(--lumo-font-size-m);
+	margin: 0;
+}
+
+.fi-panel-count {
+	color: var(--lumo-secondary-text-color);
+	font-size: var(--lumo-font-size-s);
+	text-align: right;
+}
+
+.fi-index-buttons {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr));
+	gap: var(--lumo-space-xs);
+	width: 100%;
+}
+
+/* Details: property name, value and (with "Metadata") source and date */
+.fi-details-section {
+	border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+.fi-property {
+	padding: var(--lumo-space-xs) 0;
+	border-bottom: 1px dashed var(--lumo-contrast-10pct);
+	word-break: break-word;
+}
+
+.fi-property-caption {
+	display: inline-block;
+	min-width: 9rem;
+	color: var(--lumo-secondary-text-color);
+	font-size: var(--lumo-font-size-s);
+}
+
+.fi-property-value {
+	font-weight: 500;
+}
+
+.fi-property-meta {
+	font-size: var(--lumo-font-size-xs);
+	color: var(--lumo-secondary-text-color);
+	margin-left: 9rem;
+}
+
+.fi-hide-metadata .fi-property-meta {
+	display: none;
+}
+
+.fi-structure {
+	max-width: 100%;
+	height: auto;
+	background: white;
+}
+
+/* Molecular screening (SP-13) */
+.fi-hint {
+	color: var(--lumo-secondary-text-color);
+	font-size: var(--lumo-font-size-s);
+	margin: var(--lumo-space-xs) 0;
+}
+
+.fi-field-caption {
+	font-weight: 600;
+	font-size: var(--lumo-font-size-s);
+}
+
+.fi-file-list {
+	margin: var(--lumo-space-xs) 0 var(--lumo-space-s);
+}
+
+.fi-disabled-text {
+	color: var(--lumo-disabled-text-color);
+}
+
+.fi-icon-ok {
+	color: var(--lumo-success-color);
+	width: var(--lumo-icon-size-s);
+	height: var(--lumo-icon-size-s);
+}
+
+.fi-icon-no {
+	color: var(--lumo-error-color);
+	width: var(--lumo-icon-size-s);
+	height: var(--lumo-icon-size-s);
+}
+
+/* Processes: overview in the left column and the table of the score dialog */
+.fi-process-table {
+	display: grid;
+	grid-template-columns: 1fr auto 3.5rem;
+	gap: var(--lumo-space-xs) var(--lumo-space-s);
+	align-items: center;
+	font-size: var(--lumo-font-size-s);
+	width: 100%;
+}
+
+.fi-process-table > span:nth-child(3n) {
+	text-align: right;
+}
+
+.fi-process-table > .fi-score-sum-wrong {
+	grid-column: 1 / -1;
+	text-align: left;
+}
+
+.fi-score-table {
+	display: grid;
+	grid-template-columns: minmax(10rem, 1fr) auto auto auto;
+	gap: var(--lumo-space-s) var(--lumo-space-m);
+	align-items: center;
+	justify-items: start;
+	border-bottom: 1px solid var(--lumo-contrast-20pct);
+	padding-bottom: var(--lumo-space-s);
+}
+
+.fi-score-header {
+	font-weight: 600;
+	border-bottom: 1px solid var(--lumo-contrast-20pct);
+	align-self: stretch;
+	width: 100%;
+	padding-bottom: var(--lumo-space-xs);
+}
+
+.fi-score-sum {
+	display: block;
+	text-align: right;
+	font-weight: 600;
+	margin-top: var(--lumo-space-s);
+}
+
+.fi-score-sum-wrong {
+	color: var(--lumo-error-text-color);
+	font-weight: 600;
+}
+
+/* Progress and summary dialogs */
+.fi-progress-table,
+.fi-summary-table {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	gap: var(--lumo-space-s) var(--lumo-space-m);
+	align-items: center;
+}
+
+.fi-summary-table {
+	grid-template-columns: 1fr auto;
+}
+
+.fi-progress-marker {
+	width: 4rem;
+}
+
+.fi-progress-table > span:nth-child(3n) {
+	font-weight: 600;
+}
+
+.fi-summary-title {
+	color: var(--fi-primary-dark);
+	border-bottom: 2px solid var(--fi-primary);
+	margin: var(--lumo-space-m) 0 var(--lumo-space-s);
+}
+
+.fi-summary-value {
+	font-weight: 600;
+	text-align: right;
+}
+
+/* Result list */
+vaadin-grid::part(fi-invalid-row) {
+	color: var(--lumo-error-text-color);
+}
+
+vaadin-grid::part(fi-number) {
+	text-align: right;
+}
+
+.fi-best-match {
+	color: var(--fi-primary-dark);
+	width: var(--lumo-icon-size-s);
+	height: var(--lumo-icon-size-s);
+}
+
+.fi-score-cell {
+	position: relative;
+	width: 100%;
+	height: 1.4em;
+	background: var(--lumo-contrast-5pct);
+	border-radius: var(--lumo-border-radius-s);
+	overflow: hidden;
+}
+
+.fi-score-bar {
+	position: absolute;
+	inset: 0 auto 0 0;
+	background: var(--lumo-primary-color-50pct);
+}
+
+.fi-score-cell span {
+	position: relative;
+	display: block;
+	text-align: center;
+	font-size: var(--lumo-font-size-s);
+	line-height: 1.4em;
+}
+
+.fi-score-missing {
+	color: var(--lumo-warning-text-color, #8a6100);
+}
+
+/* pH dependency of the molecule (coloured circles of the Vaadin 8 UI) */
+.fi-ph-dependency {
+	display: inline-block;
+	width: 0.9em;
+	height: 0.9em;
+	border-radius: 50%;
+}
+
+.fi-ph-neutral { background: #3cb44b; }
+.fi-ph-neutral_upper { background: #911eb4; }
+.fi-ph-neutral_lower { background: #e6c619; }
+.fi-ph-negative_loadable { background: #4363d8; }
+.fi-ph-positive_loadable { background: #e6194b; }
+
+/* Details of a candidate */
+.fi-scoring-table {
+	display: grid;
+	grid-template-columns: 1fr repeat(3, auto);
+	gap: var(--lumo-space-s) var(--lumo-space-l);
+	width: 100%;
+}
+
+.fi-scoring-header {
+	font-weight: 600;
+	border-bottom: 2px solid var(--fi-primary);
+	padding-bottom: var(--lumo-space-xs);
+}
+
+.fi-scoring-total {
+	font-weight: 700;
+	border-top: 2px solid var(--fi-primary);
+	padding-top: var(--lumo-space-xs);
+}
+
+/* Chart on top (full width), candidate and selected fragment side by side below; wraps in a narrow panel */
+.fi-msms-top {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lumo-space-m);
+	width: 100%;
+}
+
+.fi-msms-top > .fi-ms-chart {
+	flex: 1 1 100%;
+}
+
+.fi-msms-candidate {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1 1 12rem;
+	min-width: 0;
+}
+
+.fi-msms-caption {
+	font-weight: 600;
+	margin-bottom: var(--lumo-space-xs);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+.fi-fragments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--lumo-space-s);
+}
+
+.fi-fragment {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: var(--lumo-space-xs);
+	border: 1px solid var(--lumo-contrast-20pct);
+	border-radius: var(--lumo-border-radius-m);
+	background: var(--lumo-base-color);
+	cursor: pointer;
+	max-width: 14rem;
+}
+
+.fi-fragment:hover {
+	border-color: var(--fi-primary);
+}
+
+.fi-fragment img {
+	max-width: 100%;
+}
+
+.fi-fragment-formula {
+	font-weight: 600;
+}
+
+.fi-help-frame {
+	border: none;
+}
+
+.fi-ms-chart {
+	min-height: 220px;
+}

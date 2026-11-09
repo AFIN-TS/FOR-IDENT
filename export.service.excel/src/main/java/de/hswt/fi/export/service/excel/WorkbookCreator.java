@@ -3,18 +3,30 @@ package de.hswt.fi.export.service.excel;
 import de.hswt.fi.beans.BeanColumnDefinition;
 import de.hswt.fi.beans.BeanComponentMapper;
 import de.hswt.fi.calculation.service.api.CalculationService;
-import de.hswt.fi.export.service.excel.ExcelSheetDefinition.ColumnDirection;
-import de.hswt.fi.export.service.excel.RowCreator.CellValue;
-import org.apache.poi.ss.usermodel.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Drawing;
+import org.apache.poi.ss.usermodel.Picture;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-
 public class WorkbookCreator {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkbookCreator.class);
 	private CalculationService calculationService;
 	private BeanComponentMapper mapper;
@@ -32,325 +44,300 @@ public class WorkbookCreator {
 	private int columnOffset;
 
 	WorkbookCreator(BeanComponentMapper mapper, CalculationService calculationService) {
-		if (mapper == null || calculationService == null) throw new NullPointerException("Parameter must not be null.");
-		this.mapper = mapper;
-		this.calculationService = calculationService;
+		if (mapper != null && calculationService != null) {
+			this.mapper = mapper;
+			this.calculationService = calculationService;
+		} else {
+			throw new NullPointerException("Parameter must not be null.");
+		}
 	}
 
 	Workbook createWorkbook(ExcelFileDefinition definition) {
-		if (definition == null) throw new NullPointerException("Parameter definition is null.");
+		if (definition == null) {
+			throw new NullPointerException("Parameter definition is null.");
+		}
 
-		initialize();
+		this.initialize();
 
 		for (ExcelSheetDefinition sheetDefinition : definition.getSheets()) {
-			currentSheetDefinition = sheetDefinition;
-			createSheet();
+			this.currentSheetDefinition = sheetDefinition;
+			this.createSheet();
 		}
 
-		if(definition.isAddSources() &&  definition.getSourceFile() != null && definition.getSourceFile().toFile().exists()) {
-			new ExcelSheetImporter().addSheetsFromFileToWorkbook(definition.getSourceFile().toFile(), workbook);
+		if (definition.isAddSources() && definition.getSourceFile() != null && definition.getSourceFile().toFile().exists()) {
+			new ExcelSheetImporter().addSheetsFromFileToWorkbook(definition.getSourceFile().toFile(), this.workbook);
 		}
-		
-		return workbook;
-	
+
+		return this.workbook;
 	}
 
 	private void createSheet() {
-
-		if (currentSheetDefinition.getData() == null || currentSheetDefinition.getData().isEmpty()) return;
-
-		if (!currentSheetDefinition.isIncludeSource()) postfixFilter.add("source");
-		else postfixFilter.remove("source");
-
-		sheet = workbook.createSheet(checkSheetName(currentSheetDefinition.getName()));
-
-		Object targetBean = currentSheetDefinition.getData().iterator().next();
-
-		List<String> propertyIds = currentSheetDefinition.getColumnPropertyIds();
-		if (propertyIds == null) {
-			propertyIds = mapper.getSelectorColumns(currentSheetDefinition.getData().iterator().next());
-		}
-
-		Map<String, BeanColumnDefinition> columnDefinitions = mapper
-				.getBeanColumnDefinitions(targetBean, propertyIds);
-
-		if (columnDefinitions.size() != propertyIds.size()) {
-			throw new TypeNotPresentException("Unavailable column definition requested.", null);
-		}
-
-		Map<String, String> captions = mapper.getNestedPropertyCaptions(columnDefinitions.values(),
-				postfixFilter);
-
-		columnOffset = currentSheetDefinition.isCreateIndex() ? 1 : 0;
-
-		// find index of structure column, if any
-		structureColumnIndex = -1;
-		int i = -1;
-		for (String key : captions.keySet()) {
-			i++;
-			if (key.endsWith("structure")) {
-				structureColumnIndex = i + columnOffset;
-				break;
+		if (this.currentSheetDefinition.getData() != null && !this.currentSheetDefinition.getData().isEmpty()) {
+			if (!this.currentSheetDefinition.isIncludeSource()) {
+				this.postfixFilter.add("source");
+			} else {
+				this.postfixFilter.remove("source");
 			}
+
+			this.sheet = this.workbook.createSheet(this.checkSheetName(this.currentSheetDefinition.getName()));
+			Object targetBean = this.currentSheetDefinition.getData().iterator().next();
+			List<String> propertyIds = this.currentSheetDefinition.getColumnPropertyIds();
+			if (propertyIds == null) {
+				propertyIds = this.mapper.getSelectorColumns(this.currentSheetDefinition.getData().iterator().next());
+			}
+
+			Map<String, BeanColumnDefinition> columnDefinitions = this.mapper.getBeanColumnDefinitions(targetBean, propertyIds);
+			if (columnDefinitions.size() != propertyIds.size()) {
+				throw new TypeNotPresentException("Unavailable column definition requested.", null);
+			}
+
+			Map<String, String> captions = this.mapper.getNestedPropertyCaptions(columnDefinitions.values(), this.postfixFilter);
+			this.columnOffset = this.currentSheetDefinition.isCreateIndex() ? 1 : 0;
+			// find index of structure column, if any
+			this.structureColumnIndex = -1;
+			int i = -1;
+
+			for (String key : captions.keySet()) {
+				i++;
+				if (key.endsWith("structure")) {
+					this.structureColumnIndex = i + this.columnOffset;
+					break;
+				}
+			}
+
+			this.nextRowIndex = 0;
+			this.columnCount = this.columnOffset + captions.size();
+			this.resultIndex = 1;
+			if (this.currentSheetDefinition.getColumnDirection().equals(ExcelSheetDefinition.ColumnDirection.VERTICAL)) {
+				this.createTitleRow(captions.values());
+			} else {
+				this.createTitleColumn(captions.values());
+			}
+
+			columnDefinitions.values().forEach(d -> {
+				Integer var10000 = this.columnCounts.put(d, this.getColumnCount(d));
+			});
+			this.executeSheetCreation(columnDefinitions);
+			this.resizeColumns();
 		}
-
-		nextRowIndex = 0;
-		columnCount = columnOffset + captions.size();
-		resultIndex = 1;
-
-		if (currentSheetDefinition.getColumnDirection().equals(ColumnDirection.VERTICAL)) createTitleRow(captions.values());
-		else createTitleColumn(captions.values());
-
-		columnDefinitions.values().forEach(d -> columnCounts.put(d, getColumnCount(d)));
-
-		executeSheetCreation(columnDefinitions);
-
-		for (int index = columnOffset; index < columnCount; index++) resizeColumn(index);
-
 	}
 
 	private String checkSheetName(String sheetName) {
 		// XSSFWorkbook sheet names can only be 31 characters and are truncated if longer.
 		// Therefore the actual sheet name is truncated already here to  prevent failures
 		// in comparison within checkSheetName method!
-		if(sheetName.length() > 31) sheetName = sheetName.substring(0, 31);
+		if (sheetName.length() > 31) {
+			sheetName = sheetName.substring(0, 31);
+		}
+
 		WorkbookUtil.validateSheetName(sheetName);
 
-		for(int i = 0; i < workbook.getNumberOfSheets(); i++) {
-			if(workbook.getSheetName(i).equals(sheetName)) {
-					return checkSheetName("1_" + sheetName);
+		for (int i = 0; i < this.workbook.getNumberOfSheets(); i++) {
+			if (this.workbook.getSheetName(i).equals(sheetName)) {
+				return this.checkSheetName("1_" + sheetName);
 			}
 		}
+
 		return sheetName;
 	}
 
+	// The rows are created sequentially. The parallel creation of the 2022 version (thread pool) lost
+	// values at random: the lazy collections of the beans (e.g. additional names of an entry) were loaded
+	// concurrently outside of a transaction (SP-03b).
 	private void executeSheetCreation(Map<String, BeanColumnDefinition> columnDefinitions) {
-
-		for (Object bean : currentSheetDefinition.getData()) {
-				RowCreator rowCreator = new RowCreator(bean, mapper, calculationService,
-						columnCounts, columnDefinitions, postfixFilter, columnCount - columnOffset);
-			List<List<CellValue>> rows = rowCreator.getCells();
+		for (Object bean : this.currentSheetDefinition.getData()) {
+			RowCreator rowCreator = new RowCreator(
+				bean,
+				this.mapper,
+				this.calculationService,
+				this.columnCounts,
+				columnDefinitions,
+				this.postfixFilter,
+				this.columnCount - this.columnOffset
+			);
+			List<List<RowCreator.CellValue>> rows = rowCreator.getCells();
 
 			if (rows != null && !rows.isEmpty()) {
-				if (currentSheetDefinition.getColumnDirection().equals(ColumnDirection.VERTICAL)) {
-					insertRows(rows);
+				if (this.currentSheetDefinition.getColumnDirection().equals(ExcelSheetDefinition.ColumnDirection.VERTICAL)) {
+					this.insertRows(rows);
 				} else {
-					insertColumns(rows);
+					this.insertColumns(rows);
 				}
 			}
+
+			this.resultIndex++;
 		}
 	}
 
 	private void initialize() {
-		columnCounts = new HashMap<>();
-
-		workbook = new XSSFWorkbook();
-
-		initNumberCellFormats();
-
-		postfixFilter = new HashSet<>();
-		postfixFilter.add("lastModified");
-		postfixFilter.add("additional");
-
-		postfixFilter.add("scoreValue");
-		postfixFilter.add("weight");
+		this.columnCounts = new HashMap<>();
+		this.workbook = new XSSFWorkbook();
+		this.initNumberCellFormats();
+		this.postfixFilter = new HashSet<>();
+		this.postfixFilter.add("lastModified");
+		this.postfixFilter.add("additional");
+		this.postfixFilter.add("scoreValue");
+		this.postfixFilter.add("weight");
 	}
 
 	private void initNumberCellFormats() {
-
-		DataFormat dataFormat = workbook.createDataFormat();
-
-		numberCellFormats = new HashMap<>();
-		numberCellFormats.put("%.1f", getCellStyle(dataFormat, "0.0"));
-		numberCellFormats.put("%.2f", getCellStyle(dataFormat, "0.00"));
-		numberCellFormats.put("%.3f", getCellStyle(dataFormat, "0.000"));
-		numberCellFormats.put("%.4f", getCellStyle(dataFormat, "0.0000"));
-		numberCellFormats.put("%.5f", getCellStyle(dataFormat, "0.00000"));
-		numberCellFormats.put("%.6f", getCellStyle(dataFormat, "0.000000"));
+		DataFormat dataFormat = this.workbook.createDataFormat();
+		this.numberCellFormats = new HashMap<>();
+		this.numberCellFormats.put("%.1f", this.getCellStyle(dataFormat, "0.0"));
+		this.numberCellFormats.put("%.2f", this.getCellStyle(dataFormat, "0.00"));
+		this.numberCellFormats.put("%.3f", this.getCellStyle(dataFormat, "0.000"));
+		this.numberCellFormats.put("%.4f", this.getCellStyle(dataFormat, "0.0000"));
+		this.numberCellFormats.put("%.5f", this.getCellStyle(dataFormat, "0.00000"));
+		this.numberCellFormats.put("%.6f", this.getCellStyle(dataFormat, "0.000000"));
 	}
 
 	private CellStyle getCellStyle(DataFormat dataFormat, String style) {
-		CellStyle cellStyle = workbook.createCellStyle();
+		CellStyle cellStyle = this.workbook.createCellStyle();
 		cellStyle.setDataFormat(dataFormat.getFormat(style));
 		return cellStyle;
 	}
 
 	private void initRow() {
-		Row row = sheet.createRow(nextRowIndex++);
-		if (currentSheetDefinition.isCreateIndex()) {
-			row.createCell(0).setCellValue(resultIndex);
+		Row row = this.sheet.createRow(this.nextRowIndex++);
+		if (this.currentSheetDefinition.isCreateIndex()) {
+			row.createCell(0).setCellValue(this.resultIndex);
 		}
 	}
 
 	private int getColumnCount(BeanColumnDefinition column) {
 		int count = 0;
+
 		for (BeanColumnDefinition childColumn : column.getChildren()) {
-			if (postfixFilter.stream().noneMatch(f -> childColumn.getPropertyId().endsWith(f))) {
-				count += getColumnCount(childColumn);
+			if (this.postfixFilter.stream().noneMatch(f -> childColumn.getPropertyId().endsWith(f))) {
+				count += this.getColumnCount(childColumn);
 			}
 		}
+
 		return Math.max(count, 1);
 	}
 
 	private void createTitleRow(Collection<String> captions) {
-		Row row = sheet.createRow(nextRowIndex++);
-
+		Row row = this.sheet.createRow(this.nextRowIndex++);
 		int cellId = 0;
-		Cell cell;
-
-		if (currentSheetDefinition.isCreateIndex()) {
-			cell = row.createCell(cellId++);
+		if (this.currentSheetDefinition.isCreateIndex()) {
+			Cell cell = row.createCell(cellId++);
 			cell.setCellValue("ID");
 		}
 
 		for (String caption : captions) {
-			cell = row.createCell(cellId++);
+			Cell cell = row.createCell(cellId++);
 			cell.setCellValue(caption);
 		}
 	}
 
 	private void createTitleColumn(Collection<String> captions) {
 		for (String caption : captions) {
-			initRow();
-			resultIndex++;
-			Row row = sheet.getRow(nextRowIndex - 1);
-			Cell cell = row.createCell(columnOffset);
+			this.initRow();
+			this.resultIndex++;
+			Row row = this.sheet.getRow(this.nextRowIndex - 1);
+			Cell cell = row.createCell(this.columnOffset);
 			cell.setCellValue(caption);
 		}
 	}
 
-	private void insertRows(List<List<CellValue>> rows) {
-		int startRowIndex = nextRowIndex;
+	private void insertRows(List<List<RowCreator.CellValue>> rows) {
+		int startRowIndex = this.nextRowIndex;
+		rows.get(0).forEach(r -> this.initRow());
+		int columnIndex = this.columnOffset;
 
-		rows.get(0).forEach(r -> initRow());
-
-		int columnIndex = columnOffset;
-		for (List<CellValue> column : rows) {
+		for (List<RowCreator.CellValue> column : rows) {
 			int rowIndex = startRowIndex;
-			for (CellValue cellValue : column) {
-				if (!cellValue.getValue().isPresent()) {
-					continue;
-				}
-				if (columnIndex == structureColumnIndex) {
-						byte[] value = (byte[]) cellValue.getValue().get();
-						if (value.length > 0) {
-							writeStructure(value, rowIndex++);
+
+			for (RowCreator.CellValue cellValue : column) {
+				if (cellValue.getValue().isPresent()) {
+					if (columnIndex == this.structureColumnIndex) {
+						this.writeStructure((byte[])cellValue.getValue().get(), rowIndex++);
+					} else {
+						Cell cell = this.sheet.getRow(rowIndex++).createCell(columnIndex);
+						this.writeCell(cell, cellValue);
 					}
-				} else {
-					Cell cell = sheet.getRow(rowIndex++).createCell(columnIndex);
-					writeCell(cell, cellValue);
 				}
 			}
+
 			columnIndex++;
 		}
 	}
 
-	private void insertColumns(List<List<CellValue>> rows) {
-		int startColumnIndex = 1 + columnOffset;
-
+	private void insertColumns(List<List<RowCreator.CellValue>> rows) {
+		int startColumnIndex = 1 + this.columnOffset;
 		int rowIndex = 0;
-		for (List<CellValue> column : rows) {
+
+		for (List<RowCreator.CellValue> column : rows) {
 			int columnIndex = startColumnIndex;
-			for (CellValue cellValue : column) {
-				if (!cellValue.getValue().isPresent()) {
-					continue;
+
+			for (RowCreator.CellValue cellValue : column) {
+				if (cellValue.getValue().isPresent()) {
+					Cell cell = this.sheet.getRow(rowIndex).createCell(columnIndex++);
+					this.writeCell(cell, cellValue);
 				}
-				Cell cell = sheet.getRow(rowIndex).createCell(columnIndex++);
-				writeCell(cell, cellValue);
 			}
+
 			rowIndex++;
 		}
 	}
 
-	private void writeCell(Cell cell, CellValue cellValue) {
-
-		if (!cellValue.getValue().isPresent()) {
-			return;
-		}
-
-		Object value = cellValue.getValue().get();
-
-		if (Number.class.isAssignableFrom(cellValue.getType())) {
-			if (Double.class.isAssignableFrom(value.getClass())) {
-				cell.setCellValue((Double) value);
-				cellValue.getFormat().ifPresent(format -> cell.setCellStyle(numberCellFormats.get(format)));
+	private void writeCell(Cell cell, RowCreator.CellValue cellValue) {
+		if (cellValue.getValue().isPresent()) {
+			Object value = cellValue.getValue().get();
+			if (Number.class.isAssignableFrom(cellValue.getType())) {
+				if (Double.class.isAssignableFrom(value.getClass())) {
+					cell.setCellValue((Double)value);
+					cellValue.getFormat().ifPresent(format -> cell.setCellStyle(this.numberCellFormats.get(format)));
+				}
+			} else if (Date.class.isAssignableFrom(cellValue.getType()) && Date.class.isAssignableFrom(value.getClass())) {
+				cell.setCellValue((Date)value);
+			} else {
+				cell.setCellValue(value.toString());
 			}
-		} else if (Date.class.isAssignableFrom(cellValue.getType()) && Date.class.isAssignableFrom(value.getClass())) {
-			cell.setCellValue((Date) value);
-		} else {
-			cell.setCellValue(value.toString());
 		}
 	}
 
 	private void writeStructure(byte[] imageData, int rowIndex) {
-		Drawing drawing = sheet.createDrawingPatriarch();
-
-		Row row = sheet.getRow(rowIndex);
-		row.setHeightInPoints(RowCreator.IMAGE_HEIGHT);
-
-        sheet.setColumnWidth(structureColumnIndex,  PixelUtil.pixel2WidthUnits(RowCreator.IMAGE_WIDTH));
-
-		int pictureIdx = workbook.addPicture(imageData, Workbook.PICTURE_TYPE_PNG);
-
-		ClientAnchor anchor = workbook.getCreationHelper().createClientAnchor();
-		anchor.setCol1(structureColumnIndex);
+		Drawing drawing = this.sheet.createDrawingPatriarch();
+		Row row = this.sheet.getRow(rowIndex);
+		row.setHeightInPoints(200.0F);
+		int pictureIdx = this.workbook.addPicture(imageData, 6);
+		ClientAnchor anchor = this.workbook.getCreationHelper().createClientAnchor();
+		anchor.setCol1(this.structureColumnIndex);
 		anchor.setRow1(rowIndex);
-
+		anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_AND_RESIZE);
 		Picture pict = drawing.createPicture(anchor, pictureIdx);
-		pict.resize(1,1);
+		pict.resize(1.0, 1.0);
+	}
+
+	// Sequential as well: POI sheets are not thread safe, and the parallel version only waited 10 seconds,
+	// so the workbook could be written while columns were still being resized (SP-03b)
+	private void resizeColumns() {
+		for (int i = this.columnOffset; i < this.columnCount; i++) {
+			this.resizeColumn(i);
+		}
 	}
 
 	private void resizeColumn(int columnIndex) {
 		int maxNumCharacters = 0;
-
-		if (columnIndex == structureColumnIndex) return;
-
-		for (int row = 0; row <= sheet.getLastRowNum(); row++) {
-			DataFormatter formatter = new DataFormatter();
-			int numberOfCharacters = formatter
-					.formatCellValue(sheet.getRow(row).getCell(columnIndex)).length();
-			if (numberOfCharacters > maxNumCharacters) {
-				maxNumCharacters = numberOfCharacters;
+		if (columnIndex == this.structureColumnIndex) {
+			this.sheet.setColumnWidth(this.structureColumnIndex, 9472);
+		} else {
+			for (int row = 0; row <= this.sheet.getLastRowNum(); row++) {
+				DataFormatter formatter = new DataFormatter();
+				int numberOfCharacters = formatter.formatCellValue(this.sheet.getRow(row).getCell(columnIndex)).length();
+				if (numberOfCharacters > maxNumCharacters) {
+					maxNumCharacters = numberOfCharacters;
+				}
 			}
-		}
 
-		int width = (Math.min((int) ((maxNumCharacters) * (maxNumCharacters < 50 ? 1.3 : 1.1)), 100)
-				* 256);
-		synchronized (sheet) {
-			sheet.setColumnWidth(columnIndex, width);
-		}
-	}
-
-	static public class PixelUtil {
-
-		public static final short EXCEL_COLUMN_WIDTH_FACTOR = 256;
-		public static final short EXCEL_ROW_HEIGHT_FACTOR = 20;
-		public static final int UNIT_OFFSET_LENGTH = 7;
-		public static final int[] UNIT_OFFSET_MAP = new int[] { 0, 36, 73, 109, 146, 182, 219 };
-
-		public static short pixel2WidthUnits(int pxs) {
-			short widthUnits = (short) (EXCEL_COLUMN_WIDTH_FACTOR * (pxs / UNIT_OFFSET_LENGTH));
-			widthUnits += UNIT_OFFSET_MAP[(pxs % UNIT_OFFSET_LENGTH)];
-			return widthUnits;
-		}
-
-		public static int widthUnits2Pixel(short widthUnits) {
-			int pixels = (widthUnits / EXCEL_COLUMN_WIDTH_FACTOR) * UNIT_OFFSET_LENGTH;
-			int offsetWidthUnits = widthUnits % EXCEL_COLUMN_WIDTH_FACTOR;
-			pixels += Math.floor((float) offsetWidthUnits / ((float) EXCEL_COLUMN_WIDTH_FACTOR / UNIT_OFFSET_LENGTH));
-			return pixels;
-		}
-
-		public static int heightUnits2Pixel(short heightUnits) {
-			int pixels = (heightUnits / EXCEL_ROW_HEIGHT_FACTOR);
-			int offsetWidthUnits = heightUnits % EXCEL_ROW_HEIGHT_FACTOR;
-			pixels += Math.floor((float) offsetWidthUnits / ((float) EXCEL_ROW_HEIGHT_FACTOR / UNIT_OFFSET_LENGTH));
-			return pixels;
+			int width = Math.min((int)(maxNumCharacters * (maxNumCharacters < 50 ? 1.3 : 1.1)), 100) * 256;
+			this.sheet.setColumnWidth(columnIndex, width);
 		}
 	}
 
 	public boolean includeSource() {
-		return includeSource;
+		return this.includeSource;
 	}
 
 	public void setIncludeSource(boolean includeSource) {

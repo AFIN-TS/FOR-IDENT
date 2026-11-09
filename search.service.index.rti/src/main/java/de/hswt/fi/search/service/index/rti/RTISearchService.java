@@ -10,8 +10,7 @@ import de.hswt.fi.search.service.index.model.IndexJob;
 import de.hswt.fi.search.service.index.model.IndexSearchResult;
 import de.hswt.fi.search.service.index.model.IndexSearchResults;
 import de.hswt.fi.search.service.index.model.IndexSettings;
-import de.hswt.fi.search.service.index.rti.model.MoleculePhDependency;
-import de.hswt.fi.search.service.index.rti.model.RtiSearchResult;
+import de.hswt.fi.search.service.index.model.MoleculePhDependency;
 import de.hswt.fi.search.service.mass.search.model.Entry;
 import de.hswt.fi.search.service.mass.search.model.properties.NumberSearchProperty;
 import de.hswt.fi.search.service.mass.search.model.properties.NumberValueProperty;
@@ -39,7 +38,7 @@ public class RTISearchService implements IndexSearchService {
 	private static final double LOGD_MIN_VALUE = 0.35;
 	private static final double LOGD_MAX_VALUE = 4.0;
 	private static final double SCORE_MAX_LOGD_DELTA = 5.0;
-	private List<RtiSearchResult> candidates;
+	private List<IndexSearchResult> candidates;
 
 	@Override
 	public IndexSearchResults executeJob(IndexJob job, List<CompoundSearchService> searchServices) {
@@ -52,7 +51,8 @@ public class RTISearchService implements IndexSearchService {
 		double ionisation = settings.getIonisation().getIonisation();
 
 		if (!searchServices.isEmpty()) {
-			ExecutorService executor = Executors.newCachedThreadPool();
+			// One thread per CPU instead of one per feature: thousands of features exceeded the process limit of the server
+			ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 			LOGGER.debug("starting RTI search for {} targets",
 					job.getFeatureSet().getFeatures().size());
@@ -83,9 +83,9 @@ public class RTISearchService implements IndexSearchService {
 			LOGGER.debug("No search service available, RTI search not performed");
 		}
 
-		Comparator<RtiSearchResult> byTarget = Comparator.comparing(RtiSearchResult::getTargetIdentifier);
+		Comparator<IndexSearchResult> byTarget = Comparator.comparing(IndexSearchResult::getTargetIdentifier);
 
-		Comparator<RtiSearchResult> byScore = Comparator.comparing(t -> t.getScore().getScoreValue());
+		Comparator<IndexSearchResult> byScore = Comparator.comparing(t -> t.getScore().getScoreValue());
 
 		candidates = candidates.stream().sorted(byTarget.thenComparing(byScore.reversed()))
 				.collect(Collectors.toList());
@@ -100,9 +100,7 @@ public class RTISearchService implements IndexSearchService {
 
     @Override
     public IndexSearchResult getDummyResult() {
-        return new RtiSearchResult("", null, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-                false, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Ionisation.NEUTRAL_IONISATION.getIonisation(),
-                StationaryPhase.C18.toString(), MoleculePhDependency.NEUTRAL);
+        return IndexSearchResult.notAvailable();
     }
 
     /**
@@ -151,7 +149,7 @@ public class RTISearchService implements IndexSearchService {
 		public void run() {
 			double searchValue = feature.getNeutralMass();
 
-			ArrayList<RtiSearchResult> tempEntries = new ArrayList<>();
+			ArrayList<IndexSearchResult> tempEntries = new ArrayList<>();
 			List<Entry> searchResult = searchServices.stream()
 					.map(searchService -> searchService.searchByAccurateMassAndPh(new NumberSearchProperty(searchValue, ppm), ph))
 					.flatMap(List::stream)
@@ -161,7 +159,7 @@ public class RTISearchService implements IndexSearchService {
 				MoleculePhDependency dependency = getMoleculePhDependency(entry, ph);
 				Double adjustedLogD = getAdjustedLogD(feature.getRetentionTimeSignal(), dependency, stationaryPhase);
 
-				tempEntries.add(new RtiSearchResult(feature.getIdentifier(), entry,
+				tempEntries.add(new IndexSearchResult(feature.getIdentifier(), entry,
 						feature.getRetentionTime(), ph, feature.getRetentionTimeSignal(), searchValue,
 						feature.isMassCalculated(), adjustedLogD, getLogD(entry, ph), ppm,
 						feature.getRetentionTimeIndex(), ionisation, stationaryPhase, dependency));
@@ -262,12 +260,12 @@ public class RTISearchService implements IndexSearchService {
 			return max;
 		}
 
-		private void calculateScore(ArrayList<RtiSearchResult> entries, double ph) {
+		private void calculateScore(ArrayList<IndexSearchResult> entries, double ph) {
 			if (entries == null || entries.isEmpty()) {
 				return;
 			}
 
-			for (RtiSearchResult entry : entries) {
+			for (IndexSearchResult entry : entries) {
 				Score scoreSummery;
 				if (entry.isAvailable()) {
 					double logD = getLogD(entry.getEntry(), ph);
@@ -352,24 +350,24 @@ public class RTISearchService implements IndexSearchService {
 		 *
 		 * @param entries the result entries
 		 */
-		private void findBestMatch(ArrayList<RtiSearchResult> entries) {
+		private void findBestMatch(ArrayList<IndexSearchResult> entries) {
 
 			if (entries == null || entries.isEmpty()) {
 				return;
 			}
 
-			Optional<RtiSearchResult> optional = entries.stream()
+			Optional<IndexSearchResult> optional = entries.stream()
 					.max(Comparator.comparingDouble(entry -> entry.getScore().getScoreValue()));
 
 			if (optional.isPresent()) {
-				RtiSearchResult rtiSearchResult = optional.get();
+				IndexSearchResult rtiSearchResult = optional.get();
 				rtiSearchResult.setFirst(true);
 			}
 
 			optional = entries.stream().min(Comparator.comparingDouble(e -> e.getScore().getScoreValue()));
 
 			if (optional.isPresent()) {
-				RtiSearchResult r = optional.get();
+				IndexSearchResult r = optional.get();
 				r.setLast(true);
 			}
 		}

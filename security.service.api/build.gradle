@@ -1,4 +1,4 @@
 dependencies {
-	compile project(":security.service.model")
-	compile "org.springframework.boot:spring-boot-starter-security"
+	api project(":security.service.model")
+	api libs.spring.boot.starter.security
 }

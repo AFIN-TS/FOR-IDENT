@@ -68,14 +68,17 @@ public class UIProperties {
 
 	public static class Links {
 
+		// ECHA CHEM (REACH): start page and search by CAS number
 		private String reach;
+
+		private String reachParameterized;
 
 		private String massbankParameterized;
 
-		private String chemicalizeRoot;
+		// PubChem compound page by InChIKey (SP-14, replaces Chemicalize, which now needs a Chemaxon login)
+		private String pubchemParameterized;
 
-		private String chemicalizeParameterized;
-
+		// CompTox Chemicals Dashboard: details page, followed by the DTXSID
 		private String epa;
 
 		public String getReach() {
@@ -86,6 +89,14 @@ public class UIProperties {
 			this.reach = reach;
 		}
 
+		public String getReachParameterized() {
+			return reachParameterized;
+		}
+
+		public void setReachParameterized(String reachParameterized) {
+			this.reachParameterized = reachParameterized;
+		}
+
 		public String getMassbankParameterized() {
 			return massbankParameterized;
 		}
@@ -94,20 +105,12 @@ public class UIProperties {
 			this.massbankParameterized = massbankParameterized;
 		}
 
-		public String getChemicalizeRoot() {
-			return chemicalizeRoot;
+		public String getPubchemParameterized() {
+			return pubchemParameterized;
 		}
 
-		public void setChemicalizeRoot(String chemicalizeRoot) {
-			this.chemicalizeRoot = chemicalizeRoot;
-		}
-
-		public String getChemicalizeParameterized() {
-			return chemicalizeParameterized;
-		}
-
-		public void setChemicalizeParameterized(String chemicalizeParameterized) {
-			this.chemicalizeParameterized = chemicalizeParameterized;
+		public void setPubchemParameterized(String pubchemParameterized) {
+			this.pubchemParameterized = pubchemParameterized;
 		}
 
 		public String getEpa() {
@@ -120,13 +123,9 @@ public class UIProperties {
 
 		@Override
 		public String toString() {
-			return "Link [" + (reach != null ? "reach=" + reach + ", " : "")
-					+ (massbankParameterized != null
-							? "massbankParameterized=" + massbankParameterized + ", " : "")
-					+ (chemicalizeRoot != null ? "chemicalizeRoot=" + chemicalizeRoot + ", " : "")
-					+ (chemicalizeParameterized != null
-							? "chemicalizeParameterized=" + chemicalizeParameterized : "")
-					+ "]";
+			return "Link [reach=" + reach + ", reachParameterized=" + reachParameterized
+					+ ", massbankParameterized=" + massbankParameterized
+					+ ", pubchemParameterized=" + pubchemParameterized + ", epa=" + epa + "]";
 		}
 
 	}

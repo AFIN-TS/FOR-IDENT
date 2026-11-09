@@ -1,5 +1,5 @@
 dependencies {
-	compile project(":common")
-	compile project(":processing.service.model")
-	compile project(":search.service.tp.model")
+	api project(":common")
+	api project(":processing.service.model")
+	api project(":search.service.tp.model")
 }

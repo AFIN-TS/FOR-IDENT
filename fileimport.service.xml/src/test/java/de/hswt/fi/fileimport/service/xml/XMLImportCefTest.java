@@ -4,7 +4,6 @@ import de.hswt.fi.fileimport.service.api.AbstractImportTest;
 import de.hswt.fi.fileimport.service.api.FileBasedFeatureContentImporter;
 import de.hswt.fi.model.Feature;
 import de.hswt.fi.model.FeatureSet;
-import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,7 @@ public class XMLImportCefTest extends AbstractImportTest {
 
 	@Override
 	public FileBasedFeatureContentImporter getFileImporter() {
-		return new CefFeatureContentImporter(new MappingJackson2XmlHttpMessageConverter());
+		return new CefFeatureContentImporter();
 	}
 
 	@Override

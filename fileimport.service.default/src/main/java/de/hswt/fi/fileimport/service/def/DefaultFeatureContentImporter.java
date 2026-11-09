@@ -16,7 +16,9 @@ import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -48,6 +50,7 @@ public class DefaultFeatureContentImporter implements FeatureContentImporter {
 
 		if (importer.isPresent()) {
 			FeatureSet featureSet = importer.get().importFromFile(contentPath);
+			makeIdentifiersUnique(featureSet);
 			initialisePrecursorMass(featureSet);
 			importRtiCalibration(featureSet, calibrationPath);
 			initializeRtiCalibration(featureSet);
@@ -64,7 +67,24 @@ public class DefaultFeatureContentImporter implements FeatureContentImporter {
 				.filter(p -> p.canHandle(content))
 				.findFirst();
 
-		return importer.map(stringBasedFeatureContentImporter -> stringBasedFeatureContentImporter.importContent(content));
+		Optional<FeatureSet> featureSet = importer.map(stringBasedFeatureContentImporter -> stringBasedFeatureContentImporter.importContent(content));
+		featureSet.ifPresent(this::makeIdentifiersUnique);
+		return featureSet;
+	}
+
+	/**
+	 * The processing groups candidates by feature identifier. Files can contain the same identifier
+	 * for different features (e.g. "mz 264.19588" at two retention times), then MS/MS scores and best
+	 * matches were assigned to one of them at random (SP-03b). Duplicates get a suffix: "id #2", "id #3".
+	 */
+	private void makeIdentifiersUnique(FeatureSet featureSet) {
+		Map<String, Integer> occurrences = new HashMap<>();
+		for (Feature feature : featureSet.getFeatures()) {
+			int count = occurrences.merge(feature.getIdentifier(), 1, Integer::sum);
+			if (count > 1) {
+				feature.setIdentifier(feature.getIdentifier() + " #" + count);
+			}
+		}
 	}
 
 	private void initialisePrecursorMass(FeatureSet featureSet) {

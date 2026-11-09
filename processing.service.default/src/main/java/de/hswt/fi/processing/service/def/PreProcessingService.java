@@ -8,6 +8,7 @@ import de.hswt.fi.processing.service.model.ProcessingSettings;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -37,13 +38,17 @@ public class PreProcessingService {
     }
 
     private void filterIntensitiesBelowThreshold(Feature feature, double threshold) {
+        // Keep the original peaks, only the used peaks are filtered
+        feature.setUsedPeaks(new ArrayList<>(feature.getPeaks()));
         List<Peak> belowThreshold = feature.getPeaks().stream().filter(p -> p.getIntensity() < threshold)
                 .collect(Collectors.toList());
-        feature.getPeaks().removeAll(belowThreshold);
+        feature.getUsedPeaks().removeAll(belowThreshold);
     }
 
     private void updateFeaturesNeutralMass(FeatureSet featureSet, ProcessingSettings settings) {
         for (Feature feature : featureSet.getFeatures()) {
+            // The formula mass (exact, with its own ppm) is used only if the run uses the formulae of the file
+            feature.setMassCalculated(settings.isUseFormulae() && feature.getFormulaDerivedMass() != null);
             Double neutralMass;
             if (feature.isMassCalculated() && feature.getFormulaDerivedMass() != null) {
                 neutralMass = feature.getFormulaDerivedMass();
@@ -60,13 +65,13 @@ public class PreProcessingService {
 
     private void initRelativeIntensity(Feature feature) {
 
-        Optional<Peak> maxPeak = feature.getPeaks().stream().max(Comparator.comparingDouble(Peak::getIntensity));
+        Optional<Peak> maxPeak = feature.getUsedPeaks().stream().max(Comparator.comparingDouble(Peak::getIntensity));
 
-        Optional<Peak> thresholdPeak = feature.getPeaks().stream().filter(p -> p.getIntensity() >= 100).findAny();
+        Optional<Peak> thresholdPeak = feature.getUsedPeaks().stream().filter(p -> p.getIntensity() >= 100).findAny();
 
         if (thresholdPeak.isPresent() && maxPeak.isPresent()) {
             double max = maxPeak.get().getIntensity();
-            feature.getPeaks().forEach(p -> p.setRelativeIntensity(p.getIntensity() * 1000 / max));
+            feature.getUsedPeaks().forEach(p -> p.setRelativeIntensity(p.getIntensity() * 1000 / max));
             feature.setRelativeFactor(max / 1000.0);
         }
     }

@@ -1,0 +1,106 @@
+# Central versions of the build (SP-04). Libraries without a version here are managed by the
+# imported Spring Boot BOM or by the dependencyManagement block in build.gradle.
+
+[versions]
+# Spring Boot 4.1 (SP-10): Spring Framework 7, Spring Security 7, Tomcat 11, Jakarta EE 11. All libraries it
+# manages (Jackson, Logback, Tomcat, ...) come from its BOM; only the MongoDB driver is overridden (security fixes)
+spring-boot = "4.1.2"
+# Log4j 2 API version as managed by Spring Boot 4.1 (log4j-1.2-api replaces log4j 1.x, SP-07)
+log4j2 = "2.25.5"
+# MongoDB driver: 5.8.1 of the Spring Boot 4.1 BOM has CVE-2026-18710, -88032, -88033 (fixed in 5.11.1)
+mongodb = "5.14.0"
+# Vaadin Flow 25 (SP-11): only the free core components; the plugin builds the frontend bundle (needs Gradle on Java 21)
+vaadin = "25.3.4"
+# Version of MetFragLib 2.6.11 (see dev/metfraglib)
+cdk = "2.11"
+commons-text = "1.15.0"
+commons-lang3 = "3.21.0"
+commons-beanutils = "1.11.0"
+commons-validator = "1.11.0"
+guava = "33.7.2-jre"
+gson = "2.15.0"
+postgresql = "42.7.14"
+# EclipseLink 5: Jakarta Persistence 3.2 (SP-10). Kept instead of Hibernate: the existing databases were created
+# by EclipseLink (table, join table and sequence names)
+eclipselink = "5.0.2"
+owasp-encoder = "1.6.0"
+poi = "5.5.1"
+xml-apis = "1.4.01"
+jmzml = "1.7.11"
+# OpenAPI description and Swagger UI of the REST API (SP-14); 3.2 is built on Spring Boot 4.1.2
+springdoc = "3.2.0"
+
+[libraries]
+springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+# Spring Boot (versions from the Spring Boot BOM)
+spring-boot-starter-core = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-logging = { module = "org.springframework.boot:spring-boot-starter-logging" }
+spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
+spring-boot-starter-freemarker = { module = "org.springframework.boot:spring-boot-starter-freemarker" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor" }
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+# TestRestTemplate (own module since Spring Boot 4)
+spring-boot-resttestclient = { module = "org.springframework.boot:spring-boot-resttestclient" }
+spring-boot-restclient = { module = "org.springframework.boot:spring-boot-restclient" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
+# Jackson 2 (managed by the jackson-2-bom of Spring Boot 4): JSON and CEF import keep their own Jackson 2 mappers
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
+jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml" }
+
+# Vaadin Flow (SP-11)
+vaadin-bom = { module = "com.vaadin:vaadin-bom", version.ref = "vaadin" }
+vaadin-core = { module = "com.vaadin:vaadin-core" }
+vaadin-spring = { module = "com.vaadin:vaadin-spring" }
+vaadin-dev = { module = "com.vaadin:vaadin-dev" }
+
+# Chemistry and file formats
+cdk-bundle = { module = "org.openscience.cdk:cdk-bundle", version.ref = "cdk" }
+jmzml = { module = "uk.ac.ebi.jmzml:jmzml", version.ref = "jmzml" }
+# JAXB was removed from the JDK in Java 11; jmzML needs it. jmzML uses the old javax.xml.bind package, so JAXB 2.3:
+# the javax API under its own coordinates and the 2.3 runtime. Until SP-14 the API came as jakarta.xml.bind-api 2.3.3
+# (javax package), pinned for the whole build; that forced EclipseLink 5 and swagger-core (OpenAPI), which need the
+# jakarta.xml.bind package of JAXB 4, down to 2.3.3. jakarta.xml.bind-api now comes from the Spring Boot BOM (4.x)
+jaxb-api = { module = "javax.xml.bind:jaxb-api", version = "2.3.1" }
+jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version = "2.3.9" }
+poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
+xml-apis = { module = "xml-apis:xml-apis", version.ref = "xml-apis" }
+
+# Common
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
+commons-csv = { module = "org.apache.commons:commons-csv", version = "1.14.1" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
+commons-validator = { module = "commons-validator:commons-validator", version.ref = "commons-validator" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+jakarta-inject = { module = "jakarta.inject:jakarta.inject-api" }
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" }
+owasp-encoder = { module = "org.owasp.encoder:encoder", version.ref = "owasp-encoder" }
+
+# Databases
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+eclipselink-core = { module = "org.eclipse.persistence:eclipselink", version.ref = "eclipselink" }
+eclipselink-jpa = { module = "org.eclipse.persistence:org.eclipse.persistence.jpa", version.ref = "eclipselink" }
+h2 = { module = "com.h2database:h2" }
+# Schema migrations of the PostgreSQL databases (SP-16); versions from the Spring Boot BOM
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+
+# Tests
+# JUnit Jupiter (version from the Spring Boot BOM; spring-boot-starter-test brings the Jupiter API)
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+vaadin = { id = "com.vaadin", version.ref = "vaadin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
+asciidoctor = { id = "org.asciidoctor.jvm.convert", version = "4.0.5" }
+dependency-check = { id = "org.owasp.dependencycheck", version = "12.2.2" }

@@ -2,7 +2,6 @@ package de.hswt.fi.export.service.excel;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
@@ -17,13 +16,13 @@ class ExcelSheetImporter {
 
 	void addSheetsFromFileToWorkbook(File importFile, Workbook workbook) {
 
-		try (Workbook sourceData = WorkbookFactory.create(importFile)) {
+		try (Workbook sourceData = WorkbookFactory.create(importFile, null, true)) {
 			for (int i = 0; i < sourceData.getNumberOfSheets(); i++) {
 				Sheet sheet = sourceData.getSheetAt(i);
 				Sheet newSheet = workbook.createSheet(sheet.getSheetName());
 				copySheet(sheet, newSheet);
 			}
-		} catch (IOException | EncryptedDocumentException | InvalidFormatException e) {
+		} catch (IOException | EncryptedDocumentException e) {
 			LOGGER.error(e.getMessage(), e);
 		}
 	}
@@ -53,22 +52,22 @@ class ExcelSheetImporter {
 			if (oldCell != null) {
 
 				switch (oldCell.getCellType()) {
-				case HSSFCell.CELL_TYPE_STRING:
+				case STRING:
 					newCell.setCellValue(oldCell.getStringCellValue());
 					break;
-				case HSSFCell.CELL_TYPE_NUMERIC:
+				case NUMERIC:
 					newCell.setCellValue(oldCell.getNumericCellValue());
 					break;
-				case HSSFCell.CELL_TYPE_BLANK:
-					newCell.setCellType(HSSFCell.CELL_TYPE_BLANK);
+				case BLANK:
+					newCell.setCellType(CellType.BLANK);
 					break;
-				case HSSFCell.CELL_TYPE_BOOLEAN:
+				case BOOLEAN:
 					newCell.setCellValue(oldCell.getBooleanCellValue());
 					break;
-				case HSSFCell.CELL_TYPE_ERROR:
+				case ERROR:
 					newCell.setCellErrorValue(oldCell.getErrorCellValue());
 					break;
-				case HSSFCell.CELL_TYPE_FORMULA:
+				case FORMULA:
 					//TODO Handle invalid Excel formulas
 					try {
 						newCell.setCellFormula(oldCell.getCellFormula());

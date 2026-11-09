@@ -5,7 +5,6 @@ import de.hswt.fi.search.service.mass.search.model.Entry;
 import de.hswt.fi.search.service.mass.search.model.SourceList;
 import de.hswt.fi.search.service.mass.search.model.properties.*;
 import de.hswt.fi.search.service.search.api.CompoundSearchService;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,7 +185,7 @@ public class ExcelCompoundImporter implements CompoundImporter {
     @Override
     public Set<Entry> importEntries(Path path) {
 
-        try (Workbook workbook = WorkbookFactory.create(path.toFile())) {
+        try (Workbook workbook = WorkbookFactory.create(path.toFile(), null, true)) {
 
             List<Entry> entries = new ArrayList<>();
 
@@ -244,7 +243,7 @@ public class ExcelCompoundImporter implements CompoundImporter {
 
             return new HashSet<>(entries);
 
-        } catch (IOException | InvalidFormatException e) {
+        } catch (IOException e) {
             LOGGER.error(e.getMessage());
         }
 
@@ -365,9 +364,9 @@ public class ExcelCompoundImporter implements CompoundImporter {
         Integer charge = null;
 
         try {
-            value = Double.parseDouble(getStringValue(row, columnId));
-            ph = Double.parseDouble(getStringValue(row, columnId + 1));
-            charge = Integer.parseInt(getStringValue(row, columnId + 2));
+            value = Double.parseDouble(getStringValue(row, columnId).replace(',', '.'));
+            ph = Double.parseDouble(getStringValue(row, columnId + 1).replace(',', '.'));
+            charge = Integer.parseInt(getStringValue(row, columnId + 2).replace(',', '.'));
         } catch (NumberFormatException e1) {
         } catch (IllegalStateException e) {
             // Do not log/throw if optional cell chas wrong cell type

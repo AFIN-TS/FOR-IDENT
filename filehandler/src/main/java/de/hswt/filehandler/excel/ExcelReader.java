@@ -3,8 +3,8 @@ package de.hswt.filehandler.excel;
 import de.hswt.filehandler.api.Reader;
 import de.hswt.filehandler.definition.ColumnDefinition;
 import de.hswt.filehandler.definition.SheetDefinition;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
@@ -83,6 +83,12 @@ public abstract class ExcelReader implements Reader<Workbook> {
 		scoreValue = calculateScore(workbook);
 		if (!requiredColumnCaptions.isEmpty() && !columnCaptions.containsAll(requiredColumnCaptions)) {
 			return 0.0;
+		}
+
+		try {
+			workbook.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 		return scoreValue;
@@ -399,8 +405,8 @@ public abstract class ExcelReader implements Reader<Workbook> {
 			// Check if the current column contains a string. If it does not
 			// then
 			// skip this column because it can not contain an identifier.
-			if (cell.getCellType() != Cell.CELL_TYPE_STRING
-					&& cell.getCellType() != Cell.CELL_TYPE_BLANK) {
+			if (cell.getCellType() != CellType.STRING
+					&& cell.getCellType() != CellType.BLANK) {
 				continue;
 			}
 
@@ -487,8 +493,8 @@ public abstract class ExcelReader implements Reader<Workbook> {
 			// Check if the current column contains a string. If it does not
 			// then
 			// skip this column because it can not contain an identifier.
-			if (cell.getCellType() != Cell.CELL_TYPE_STRING
-					&& cell.getCellType() != Cell.CELL_TYPE_BLANK) {
+			if (cell.getCellType() != CellType.STRING
+					&& cell.getCellType() != CellType.BLANK) {
 				continue;
 			}
 
@@ -932,7 +938,7 @@ public abstract class ExcelReader implements Reader<Workbook> {
 
 		for (Cell cell : identifierRow) {
 
-			if (cell.getCellType() == Cell.CELL_TYPE_STRING
+			if (cell.getCellType() == CellType.STRING
 					&& !cell.getStringCellValue().isEmpty()) {
 				columnCaptions.add(cell.getStringCellValue());
 				numberOfExistingColumns++;
@@ -999,9 +1005,9 @@ public abstract class ExcelReader implements Reader<Workbook> {
 	}
 
 	protected Workbook getNewWorkbook(Path path) {
-		try (Workbook workbook = WorkbookFactory.create(path.toFile())) {
+		try (Workbook workbook = WorkbookFactory.create(path.toFile(), null, true)) {
 			return workbook;
-		} catch (InvalidFormatException | IOException e) {
+		} catch (IOException e) {
 			LOGGER.error(e.getMessage());
 		}
 		return null;

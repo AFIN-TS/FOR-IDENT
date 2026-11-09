@@ -100,6 +100,12 @@ public abstract class AbstractCalibrationExcelReader extends ExcelReader {
 			}
 		}
 
+		try {
+			sheet.getWorkbook().close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		return results;
 	}
 

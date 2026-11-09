@@ -1,4 +1,4 @@
 dependencies {
-	compile "org.apache.poi:poi-ooxml"
-	compile "org.springframework.boot:spring-boot-starter-logging"
+	api libs.poi.ooxml
+	api libs.spring.boot.starter.logging
 }

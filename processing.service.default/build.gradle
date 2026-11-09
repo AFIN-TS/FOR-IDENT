@@ -1,9 +1,9 @@
 dependencies {
-	compile project(":filehandler")
-	compile project(":msms.service.api")
-	compile project(":processing.service.api")
-	compile project(":search.service.mass.search.api")
-	compile project(":search.service.index.api")
-	compile project(":search.service.index.model")
-	compile project(":search.service.tp.api")
+	api project(":filehandler")
+	api project(":msms.service.api")
+	api project(":processing.service.api")
+	api project(":search.service.mass.search.api")
+	api project(":search.service.index.api")
+	api project(":search.service.index.model")
+	api project(":search.service.tp.api")
 }

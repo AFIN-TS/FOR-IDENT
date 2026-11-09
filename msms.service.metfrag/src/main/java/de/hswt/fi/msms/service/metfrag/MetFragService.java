@@ -45,7 +45,8 @@ public class MetFragService implements MsMsService {
 			return results;
 		}
 
-		ExecutorService executor = Executors.newCachedThreadPool();
+		// One thread per CPU instead of one per feature: thousands of features exceeded the process limit of the server
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		List<FutureTask<Pair>> tasks = new ArrayList<>();
 
@@ -54,6 +55,7 @@ public class MetFragService implements MsMsService {
 			tasks.add(task);
 			executor.execute(task);
 		}
+		executor.shutdown();
 
 		for (FutureTask<Pair> task : tasks) {
 			Pair pair;
@@ -112,7 +114,9 @@ public class MetFragService implements MsMsService {
 		for (int i = 0; i < scoredCandidateList.getNumberElements(); i++) {
 			MsMsCandidate candidate = parseCandidate(data.getFeature(),
 					scoredCandidateList.getElement(i));
-			candidates.add(candidate);
+			if (candidate != null) {
+				candidates.add(candidate);
+			}
 		}
 
 		return new Pair(data.getFeature().getIdentifier(), candidates);
@@ -120,6 +124,14 @@ public class MetFragService implements MsMsService {
 
 	private MsMsCandidate parseCandidate(Feature data, ICandidate candidate) {
 		List<MsMsCandidateFragment> candidateFragments = new ArrayList<>();
+		// MetFrag 2.6 releases the precursor molecule after scoring; formula and SMILES of the fragments
+		// need it again (as in the result writers of MetFrag)
+		try {
+			candidate.initialisePrecursorCandidate();
+		} catch (Exception e) {
+			LOGGER.error("Cannot initialise candidate {}", candidate.getIdentifier(), e);
+			return null;
+		}
 		for (int i = 0; i < candidate.getMatchList().getNumberElements(); i++) {
 			IMatch match = candidate.getMatchList().getElement(i);
 			try {
@@ -129,8 +141,8 @@ public class MetFragService implements MsMsService {
 				MsMsCandidateFragment candidateFragment = new MsMsCandidateFragmentBuilder().
 						withMass(match.getMatchedPeak().getMass())
 						.withFormula(
-						match.getModifiedFormulaStringOfBestMatchedFragment())
-						.withSmiles(match.getBestMatchedFragment().getSmiles())
+						match.getModifiedFormulaStringOfBestMatchedFragment(candidate.getPrecursorMolecule()))
+						.withSmiles(match.getBestMatchedFragment().getSmiles(candidate.getPrecursorMolecule()))
 						.withPeak(new Peak(match.getMatchedPeak().getMass(), relativeIntensity, match.getMatchedPeak().getIntensity()))
 						.withImage(null)
 						.createMsMsCandidateFragment();
@@ -153,7 +165,7 @@ public class MetFragService implements MsMsService {
 				(String) candidate.getProperty("InChIKey1"),
 				(double) candidate.getProperty("FragmenterScore"),
 				(String) candidate.getProperty("FragmenterScore_Values"),
-				data.getPeaks(),
+				data.getUsedPeaks(),
 				candidateFragments);
 	}
 
@@ -163,7 +175,7 @@ public class MetFragService implements MsMsService {
 
 		SortedTandemMassPeakList peakList = new SortedTandemMassPeakList(feature.getNeutralMass());
 
-		for (Peak peak : feature.getPeaks()) {
+		for (Peak peak : feature.getUsedPeaks()) {
 			peakList.addElement(new TandemMassPeak(peak.getMz(), peak.getIntensity(),
 					peak.getRelativeIntensity()));
 		}
@@ -180,32 +192,24 @@ public class MetFragService implements MsMsService {
 		globalSettings.set("NeutralPrecursorMass", feature.getNeutralMass());
 		globalSettings.set("DatabaseSearchRelativeMassDeviation", 1.0 * settings.getPpm());
 
-		// 0 = ""
-		// 1 = -H
-		// 2 = +H
-		// 3 = -D
-		// 4 = +D
-		// ...
+		// Precursor ion type as nominal mass of the adduct (MetFrag Constants.ADDUCT_NOMINAL_MASSES):
+		// 1 = [M+H]+, -1 = [M-H]-, 0 = [M]. Formerly 2 and 1 were used, read as list positions, but MetFrag
+		// (2.3 and 2.6) reads them as [M+D]+ and [M+H]+; the charge was always positive (SP-07)
 		int ionMode = 0;
-		// TODO maybe this is wrong, check this
+		boolean positive = true;
 		switch (settings.getIonisation()) {
 		case NEGATIVE_IONISATION:
-			ionMode = 1;
+			ionMode = -1;
+			positive = false;
 			break;
 		case POSITIVE_IONISATION:
-			ionMode = 2;
+			ionMode = 1;
 			break;
 		default:
 			break;
 		}
-
-		//TODO (Tobias) Example Candesartan: The number of matching fragments is diferent
-		//when using the number two. If ionMode is set to one, the the number of matching fragments
-		// is the same a on the MetFrag Beta Page (8). Clear with Sylvia, which is the right one...
 		globalSettings.set("PrecursorIonMode", ionMode);
-
-		// TODO charge ... of what? like metfrag HP?
-		globalSettings.set("IsPositiveIonMode", true);
+		globalSettings.set("IsPositiveIonMode", positive);
 
 		globalSettings.set("MetFragScoreTypes", new String[] { "FragmenterScore" });
 		globalSettings.set("MetFragScoreWeights", new Double[] { 1.0 });

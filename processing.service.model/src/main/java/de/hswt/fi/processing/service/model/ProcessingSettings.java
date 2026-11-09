@@ -6,6 +6,7 @@ import de.hswt.fi.common.Ionisation;
 import de.hswt.fi.common.StationaryPhase;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @BeanComponent
 public class ProcessingSettings implements Serializable {
@@ -21,6 +22,10 @@ public class ProcessingSettings implements Serializable {
 	// Bean column needs setter, therefor this constant is not declared static final
 	@BeanColumn(selector = true, i18nId = I18nKeys.FORMULA_DERIVED_MASSES_PPM, format = "%.4f")
 	private double formulaDerivedMassesPpm = 0.01;
+
+	// Whether the masses calculated from the formulae of the file are used (topic T9); otherwise the precursor m/z
+	@BeanColumn(selector = true, i18nId = I18nKeys.USE_FORMULAE)
+	private boolean useFormulae = true;
 
 	private double requestedPrecursorPpm;
 
@@ -61,6 +66,14 @@ public class ProcessingSettings implements Serializable {
 
 	public void setPrecursorPpm(double precursorPpm) {
 		this.precursorPpm = precursorPpm;
+	}
+
+	public boolean isUseFormulae() {
+		return useFormulae;
+	}
+
+	public void setUseFormulae(boolean useFormulae) {
+		this.useFormulae = useFormulae;
 	}
 
 	public double getRequestedPrecursorPpm() {
@@ -120,62 +133,37 @@ public class ProcessingSettings implements Serializable {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		long temp;
-		temp = Double.doubleToLongBits(formulaDerivedMassesPpm);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((ionisation == null) ? 0 : ionisation.hashCode());
-		temp = Double.doubleToLongBits(ph);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(ppmFragments);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(precursorPpm);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(requestedPrecursorPpm);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((scoreSettings == null) ? 0 : scoreSettings.hashCode());
-		result = prime * result + ((stationaryPhase == null) ? 0 : stationaryPhase.hashCode());
-		return result;
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		ProcessingSettings that = (ProcessingSettings) o;
+		return Double.compare(that.ph, ph) == 0
+				&& Double.compare(that.precursorPpm, precursorPpm) == 0
+				&& Double.compare(that.formulaDerivedMassesPpm, formulaDerivedMassesPpm) == 0
+				&& useFormulae == that.useFormulae
+				&& Double.compare(that.requestedPrecursorPpm, requestedPrecursorPpm) == 0
+				&& Double.compare(that.ppmFragments, ppmFragments) == 0
+				&& Double.compare(that.intensityThreshold, intensityThreshold) == 0
+				&& ionisation == that.ionisation
+				&& stationaryPhase == that.stationaryPhase
+				&& scoreSettings.equals(that.scoreSettings);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ProcessingSettings other = (ProcessingSettings) obj;
-		if (Double.doubleToLongBits(formulaDerivedMassesPpm) != Double
-				.doubleToLongBits(other.formulaDerivedMassesPpm))
-			return false;
-		if (ionisation != other.ionisation)
-			return false;
-		if (Double.doubleToLongBits(ph) != Double.doubleToLongBits(other.ph))
-			return false;
-		if (Double.doubleToLongBits(ppmFragments) != Double.doubleToLongBits(other.ppmFragments))
-			return false;
-		if (Double.doubleToLongBits(precursorPpm) != Double.doubleToLongBits(other.precursorPpm))
-			return false;
-		if (Double.doubleToLongBits(requestedPrecursorPpm) != Double
-				.doubleToLongBits(other.requestedPrecursorPpm))
-			return false;
-		if (scoreSettings == null) {
-			if (other.scoreSettings != null)
-				return false;
-		} else if (!scoreSettings.equals(other.scoreSettings))
-			return false;
-
-		return stationaryPhase == other.stationaryPhase;
+	public int hashCode() {
+		return Objects.hash(ph, precursorPpm, formulaDerivedMassesPpm, useFormulae, requestedPrecursorPpm, ppmFragments,
+				intensityThreshold, ionisation, stationaryPhase, scoreSettings);
 	}
 
 	@Override
 	public String toString() {
 		return "ProcessSettings [precursorPpm=" + precursorPpm + ", requestedPrecursorPpm="
-				+ requestedPrecursorPpm + ", ppmFragments=" + ppmFragments + ", "
+				+ requestedPrecursorPpm + ", ppmFragments=" + ppmFragments + ",  intensityThreshold="
+				+ intensityThreshold + ", "
 				+ (ionisation != null ? "ionisation=" + ionisation + ", " : "") + "ph=" + ph + ", "
 				+ (stationaryPhase != null ? "stationaryPhase=" + stationaryPhase + ", " : "")
 				+ (scoreSettings != null ? "scoreSettings=" + scoreSettings : "") + "]";

@@ -35,6 +35,8 @@ public class I18nKeys {
 	public static final String STATIONARY_PHASE = "STATIONARY_PHASE";
 	
 	public static final String FORMULA_DERIVED_MASSES_PPM = "FORMULA_DERIVED_MASSES_PPM";
+
+	public static final String USE_FORMULAE = "USE_FORMULAE";
 	
 	public static final String PPM_FRAGMENTS = "PPM_FRAGMENTS";
 

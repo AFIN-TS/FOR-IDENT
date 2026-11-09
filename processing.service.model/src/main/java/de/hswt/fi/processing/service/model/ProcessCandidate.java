@@ -30,6 +30,7 @@ public class ProcessCandidate {
 	@BeanColumn
 	private IndexSearchResult indexSearchResult = null;
 
+	@BeanColumn
 	private PathwayCandidate pathwayCandidate = null;
 
 	private String id;

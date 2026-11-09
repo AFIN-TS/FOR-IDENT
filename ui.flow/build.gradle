@@ -1,0 +1,17 @@
+// New user interface (SP-11 to SP-13): Vaadin Flow 25, replaces ui.vaadin (Vaadin 8)
+dependencies {
+	api project(":common")
+	api project(":application.properties")
+	api project(":security.service.api")
+	api project(":security.service.vaadin")
+	api project(":mail.service")
+	api project(":search.service.search.api")
+	api project(":export.service.excel")
+	api project(":userproperties.service.api")
+	api project(":processing.service.api")
+	api project(":fileimport.service.api")
+
+	api libs.vaadin.core
+	api libs.vaadin.spring
+	api libs.commons.validator
+}

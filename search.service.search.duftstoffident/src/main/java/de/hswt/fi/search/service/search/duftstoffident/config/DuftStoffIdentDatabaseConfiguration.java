@@ -1,12 +1,15 @@
 package de.hswt.fi.search.service.search.duftstoffident.config;
 
 import de.hswt.fi.common.spring.Profiles;
+import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -15,8 +18,7 @@ import org.springframework.orm.jpa.vendor.EclipseLinkJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceUnit;
+import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 import static de.hswt.fi.search.service.search.duftstoffident.config.DuftStoffIdentDatabaseConfiguration.*;
@@ -26,6 +28,10 @@ import static de.hswt.fi.search.service.search.duftstoffident.config.DuftStoffId
 @EnableTransactionManagement
 @EnableJpaRepositories(
 		basePackages = BASE_PACKAGE,
+		// Explicit filter: with Spring Data MongoDB on the classpath, Spring Data 4 otherwise skips these repositories
+		// in its strict multi-store check (SP-10)
+		includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
+				classes = org.springframework.data.repository.Repository.class),
 		entityManagerFactoryRef = ENTITY_MANAGER,
 		transactionManagerRef = TRANSACTION_MANAGER
 )
@@ -54,7 +60,6 @@ public class DuftStoffIdentDatabaseConfiguration {
 	}
 
 	@Bean(name = ENTITY_MANAGER)
-	@PersistenceUnit(name = PERSISTENCE_UNIT)
 	public LocalContainerEntityManagerFactoryBean duftstoffidentEntityManager(@Qualifier(DATA_SOURCE) DataSource dataSource,
 																			  // Fix for generate-ddl property not picked up by spring with multiple data sources
 																			  @Value("${" + CONFIGURATION_PREFIX + ".generate-ddl:false}") boolean generateDdl) {
@@ -67,6 +72,8 @@ public class DuftStoffIdentDatabaseConfiguration {
 
 		em.setJpaVendorAdapter(vendorAdapter);
 		em.setPersistenceUnitName(PERSISTENCE_UNIT);
+		// The entities are woven at build time (gradle/eclipselink-weaving.gradle), no -javaagent needed
+		em.getJpaPropertyMap().put(PersistenceUnitProperties.WEAVING, "static");
 
 		return em;
 	}

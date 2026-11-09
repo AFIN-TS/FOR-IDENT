@@ -1,0 +1,23 @@
+# Labels for caddy-docker-proxy (lucaslorentz/caddy-docker-proxy) (SP-16):
+# docker-compose.override.yml next to the docker-compose.yml of caddy-docker-proxy. Same configuration as
+# Caddyfile.example. During the move use the staging name (e.g. new.for-ident.example.org) instead of for-ident.example.org.
+services:
+  caddy:
+    extra_hosts:
+      # FOR-IDENT runs on the host, not in Docker
+      - "host.docker.internal:host-gateway"
+    labels:
+      caddy_0: for-ident.example.org
+      caddy_0.request_body.max_size: 20MB
+      caddy_0.reverse_proxy: host.docker.internal:8080
+      caddy_0.reverse_proxy.health_uri: /actuator/health
+      caddy_0.reverse_proxy.health_interval: 30s
+      caddy_0.header.Strict-Transport-Security: "max-age=31536000"
+      caddy_0.header.X-Content-Type-Options: nosniff
+      caddy_0.header.Referrer-Policy: strict-origin-when-cross-origin
+      caddy_0.header.-Server: ""
+      caddy_0.encode: zstd gzip
+      caddy_1: www.for-ident.example.org
+      caddy_1.redir: https://for-ident.example.org{uri} permanent
+    logging:
+      driver: journald

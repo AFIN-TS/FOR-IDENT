@@ -9,8 +9,8 @@
 //import java.util.Collections;
 //import java.util.Properties;
 //
-//import javax.mail.Message;
-//import javax.mail.MessagingException;
+//import jakarta.mail.Message;
+//import jakarta.mail.MessagingException;
 //
 //import org.junit.After;
 //import org.junit.Before;

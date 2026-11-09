@@ -1,7 +1,7 @@
 dependencies {
-	compile project(":common")
-	compile project(":search.service.index.rti.model")
-	compile project(":search.service.index.api")
-	compile project(":search.service.mass.search.api")
-	compile project(":search.service.search.api")
+	api project(":common")
+	api project(":search.service.index.rti.model")
+	api project(":search.service.index.api")
+	api project(":search.service.mass.search.api")
+	api project(":search.service.search.api")
 }

@@ -108,7 +108,15 @@ public abstract class AbstractExcelReader extends ExcelReader {
 			return Collections.emptyList();
 		}
 
-		return getExtractFeatureData(sheetDefinition, sheet);
+		List<Feature> features = getExtractFeatureData(sheetDefinition, sheet);
+
+		try {
+			sheet.getWorkbook().close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return features;
 	}
 
 	private List<Feature> getExtractFeatureData(SheetDefinition sheetDefinition, Sheet sheet) {

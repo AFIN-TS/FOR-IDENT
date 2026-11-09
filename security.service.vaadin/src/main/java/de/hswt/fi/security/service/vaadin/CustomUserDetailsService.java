@@ -41,7 +41,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String username) {
 
-		Optional<RegisteredUser> optionalUser = registeredUserRepository.findByUsername(username);
+		// User names are stored in lower case (RegisteredUser); the Vaadin 8 login converted the input, the login form of
+		// the Flow UI posts it unchanged (SP-11)
+		Optional<RegisteredUser> optionalUser = registeredUserRepository.findByUsername(
+				username == null ? null : username.trim().toLowerCase(Locale.ROOT));
 
 		if (optionalUser.isPresent()) {
 

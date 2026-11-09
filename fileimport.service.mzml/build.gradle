@@ -1,6 +1,11 @@
 dependencies {
-	compile "uk.ac.ebi.jmzml:jmzml:1.7.4"
-	compile project(":fileimport.service.api")
+	api libs.jmzml
+	runtimeOnly libs.jaxb.api
+	runtimeOnly(libs.jaxb.runtime) {
+		// The javax API comes from libs.jaxb.api; jakarta.xml.bind-api 4 (Spring Boot BOM) is used by EclipseLink and OpenAPI
+		exclude group: "jakarta.xml.bind", module: "jakarta.xml.bind-api"
+	}
+	api project(":fileimport.service.api")
 
-	testCompile project(":fileimport.service.api").sourceSets.test.output
+	testImplementation project(":fileimport.service.api").sourceSets.test.output
 }

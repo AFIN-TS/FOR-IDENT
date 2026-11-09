@@ -1,8 +1,8 @@
 dependencies {
-	compile project(":filehandler")
-	compile project(":model")
-	compile project(":fileimport.service.api")
-	compile project(":fileimport.service.excel")
+	api project(":filehandler")
+	api project(":model")
+	api project(":fileimport.service.api")
+	api project(":fileimport.service.excel")
 
-	testCompile project(":fileimport.service.api").sourceSets.test.output
+	testImplementation project(":fileimport.service.api").sourceSets.test.output
 }

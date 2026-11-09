@@ -3,7 +3,6 @@ package de.hswt.filehandler.excel;
 import de.hswt.filehandler.api.Inspector;
 import de.hswt.filehandler.api.Reader;
 import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.slf4j.Logger;
@@ -23,7 +22,7 @@ public class ExcelInspector implements Inspector<Workbook> {
 
 		Map<String, Double> capableReaders = new HashMap<>();
 
-		try(Workbook workbook = WorkbookFactory.create(path.toFile())) {
+		try(Workbook workbook = WorkbookFactory.create(path.toFile(), null, true)) {
 			for (String id : readers.keySet()) {
 				ExcelReader reader = (ExcelReader) readers.get(id);
 
@@ -33,8 +32,8 @@ public class ExcelInspector implements Inspector<Workbook> {
 					capableReaders.put(id, score);
 				}
 			}
-		} catch (EncryptedDocumentException | InvalidFormatException | IOException e) {
-			LOGGER.error("File can not read into workbook, so invalid inspector, error: {}", e.getMessage());
+		} catch (EncryptedDocumentException | IOException e) {
+			LOGGER.error("File can not read into workbook, so invalid inspector", e);
 			return capableReaders;
 		}
 
@@ -44,9 +43,9 @@ public class ExcelInspector implements Inspector<Workbook> {
 	@Override
 	public double canHandle(Reader<Workbook> reader, Path path, Class<?> clazz) {
 
-		try(Workbook workbook = WorkbookFactory.create(path.toFile())) {
+		try(Workbook workbook = WorkbookFactory.create(path.toFile(), null, true)) {
 			return reader.canHandle(workbook, clazz);
-		} catch (EncryptedDocumentException | InvalidFormatException | IOException e) {
+		} catch (EncryptedDocumentException | IOException e) {
 			LOGGER.error("File can not read into workbook, so invalid inspector", e);
 		}
 

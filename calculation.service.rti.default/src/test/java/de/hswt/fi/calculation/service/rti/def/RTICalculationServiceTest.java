@@ -3,9 +3,9 @@ package de.hswt.fi.calculation.service.rti.def;
 import de.hswt.fi.calculation.service.rti.api.RTICalculationService;
 import de.hswt.fi.model.Feature;
 import de.hswt.fi.model.RTICalibrationData;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class RTICalculationServiceTest {
 		return calibrationData;
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		rtiCalculationService = new DefaultRTICalculationService();
 	}
@@ -56,7 +56,7 @@ public class RTICalculationServiceTest {
 		List<Double> referenceRTIs = Arrays.asList(50.00000 , 82.74194, 91.45161, 95.96774, 110.80645, 122.74194, 132.41935, 145.16129, 150.00000, 100.96774, 85.32258, 101.93548);
 
 		for (int i = 0; i < calibrationData.size(); i++) {
-			Assert.assertTrue(equals(referenceRTIs.get(i), calibrationData.get(i).getRti()));
+			Assertions.assertTrue(equals(referenceRTIs.get(i), calibrationData.get(i).getRti()));
 		}
 	}
 
@@ -68,9 +68,9 @@ public class RTICalculationServiceTest {
 		for (RTICalibrationData calibration : calibrationData) {
 
 			if (calibration.getIdentifier().equals("Dapson")) {
-				Assert.assertFalse(calibration.isValid());
+				Assertions.assertFalse(calibration.isValid());
 			} else {
-				Assert.assertTrue(calibration.isValid());
+				Assertions.assertTrue(calibration.isValid());
 			}
 		}
 	}
@@ -93,8 +93,8 @@ public class RTICalculationServiceTest {
 		List<Double> referenceLogDs = Arrays.asList(0.5683596, 0.5302798, 1.945326, 1.11448);
 
 		for (int i = 0; i < targetFeatures.size(); i++) {
-			Assert.assertTrue(equals(referenceRTIs.get(i), targetFeatures.get(i).getRetentionTimeIndex()));
-			Assert.assertTrue(equals(referenceLogDs.get(i), targetFeatures.get(i).getRetentionTimeSignal()));
+			Assertions.assertTrue(equals(referenceRTIs.get(i), targetFeatures.get(i).getRetentionTimeIndex()));
+			Assertions.assertTrue(equals(referenceLogDs.get(i), targetFeatures.get(i).getRetentionTimeSignal()));
 		}
 	}
 }

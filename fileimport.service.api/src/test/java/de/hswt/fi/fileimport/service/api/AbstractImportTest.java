@@ -4,9 +4,9 @@ import de.hswt.fi.model.Feature;
 import de.hswt.fi.model.FeatureSet;
 import de.hswt.fi.model.Peak;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 abstract public class AbstractImportTest {
 
 	public abstract FileBasedFeatureContentImporter getFileImporter();

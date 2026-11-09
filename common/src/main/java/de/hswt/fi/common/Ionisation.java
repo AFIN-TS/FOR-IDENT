@@ -3,8 +3,8 @@ package de.hswt.fi.common;
 public enum Ionisation {
 
 	NEUTRAL_IONISATION("\u00B10", 0.0),
-	POSITIVE_IONISATION("+H", -SearchUtil.H_MASS),
-	NEGATIVE_IONISATION("-H", SearchUtil.H_MASS);
+	POSITIVE_IONISATION("+H", -SearchUtil.PROTON_MASS),
+	NEGATIVE_IONISATION("-H", SearchUtil.PROTON_MASS);
 
 	private String label;
 

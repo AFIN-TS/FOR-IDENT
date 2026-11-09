@@ -1,6 +1,7 @@
 package de.hswt.fi.common;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -40,11 +41,11 @@ public final class PoiUtil {
 
 		String value;
 		switch (cell.getCellType()) {
-		case Cell.CELL_TYPE_NUMERIC:
+		case NUMERIC:
 			value = Double.toString(cell.getNumericCellValue());
 			LOGGER.trace("The given cell is a numberic cell.");
 			break;
-		case Cell.CELL_TYPE_STRING:
+		case STRING:
 			LOGGER.trace("The given cell is a string cell.");
 			return Encode.forHtml((cell.getStringCellValue()));
 		default: return "";
@@ -74,11 +75,11 @@ public final class PoiUtil {
 
 		Double value = null;
 		switch (cell.getCellType()) {
-		case Cell.CELL_TYPE_NUMERIC:
+		case NUMERIC:
 			LOGGER.trace("The given cell is a numberic cell.");
 			value = cell.getNumericCellValue();
 			break;
-		case Cell.CELL_TYPE_STRING:
+		case STRING:
 			LOGGER.trace("The given cell is a string cell.");
 			try {
 				value = Double.parseDouble(Encode.forHtml((cell.getStringCellValue())));
@@ -107,7 +108,7 @@ public final class PoiUtil {
 		}
 		for (int c = row.getFirstCellNum(); c <= row.getLastCellNum(); c++) {
 			Cell cell = row.getCell(c);
-			if (cell != null && cell.getCellType() != Cell.CELL_TYPE_BLANK) {
+			if (cell != null && cell.getCellType() != CellType.BLANK) {
 				return false;
 			}
 		}

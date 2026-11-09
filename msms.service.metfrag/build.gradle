@@ -1,6 +1,9 @@
 dependencies {
-    compile project(":msms.service.api")
-	compile (name: "MetFragLib-2.3")
+    api project(":msms.service.api")
+	// Built from the MetFragRelaunched release by dev/metfraglib (not published to Maven Central)
+	api (name: "MetFragLib-2.6.11")
 
-    compile "org.openscience.cdk:cdk-bundle"
+    api libs.cdk.bundle
+	// Runtime dependencies of MetFragLib used by FOR-IDENT (its POM is not resolved from the local JAR)
+	runtimeOnly libs.commons.csv
 }

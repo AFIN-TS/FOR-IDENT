@@ -1,0 +1,16 @@
+# Daily database backup of FOR-IDENT (SP-16), started by for-ident-backup.timer, see deploy/README.md
+# Install: /etc/systemd/system/for-ident-backup.service, script in /opt/for-ident/bin/backup-databases.sh
+[Unit]
+Description=Backup of the FOR-IDENT databases
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=postgres
+Group=postgres
+# Directory owned by postgres, mode 700 (personal data in the user database)
+Environment=BACKUP_DIR=/var/backups/for-ident
+Environment=KEEP_DAYS=14
+ExecStart=/bin/bash /opt/for-ident/bin/backup-databases.sh
+Nice=10
+IOSchedulingClass=idle

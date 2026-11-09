@@ -1,0 +1,12 @@
+# Daily at 02:30 (or at the next boot if the server was off), see deploy/README.md
+# Install: /etc/systemd/system/for-ident-backup.timer, then systemctl enable --now for-ident-backup.timer
+[Unit]
+Description=Daily backup of the FOR-IDENT databases
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

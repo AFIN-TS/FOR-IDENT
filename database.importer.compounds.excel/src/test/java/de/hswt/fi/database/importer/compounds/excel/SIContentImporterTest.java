@@ -4,9 +4,9 @@ import de.hswt.fi.database.importer.compounds.api.CompoundImporter;
 import de.hswt.fi.search.service.mass.search.model.Entry;
 import de.hswt.fi.search.service.mass.search.model.SourceList;
 import de.hswt.fi.search.service.mass.search.model.properties.*;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class SIContentImporterTest {
 
 	private List<Entry> referenceEntries;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		importer = new ExcelCompoundImporter();
 		referenceEntries = createReferenceData();
@@ -234,10 +234,10 @@ public class SIContentImporterTest {
 		importedEntries.sort(Comparator.comparing(Entry::getPublicID, String.CASE_INSENSITIVE_ORDER));
 
 
-		Assert.assertEquals(referenceEntries.size(), importedEntries.size());
+		Assertions.assertEquals(referenceEntries.size(), importedEntries.size());
 
 		for (int i = 0; i < referenceEntries.size(); i++) {
-			Assert.assertTrue(propertiesEqual(referenceEntries.get(i), importedEntries.get(i)));
+			Assertions.assertTrue(propertiesEqual(referenceEntries.get(i), importedEntries.get(i)));
 		}
 	}
 

@@ -1,13 +1,11 @@
 dependencies {
-	compile project(":common")
+	api project(":common")
 
-	compile project(":security.service.api")
-	compile project(":security.service.model")
-	compile project(":application.properties")
-	compile project(":userproperties.service.api")
+	api project(":security.service.api")
+	api project(":security.service.model")
+	api project(":application.properties")
+	api project(":userproperties.service.api")
 
-	compile "org.springframework.boot:spring-boot-starter-security"
-	compile "com.vaadin:vaadin-spring-boot-starter"	
-	compile "org.vaadin.spring.extensions:vaadin-spring-ext-core"
-	compile "org.vaadin.spring.extensions:vaadin-spring-ext-security"
+	api libs.spring.boot.starter.security
+	api libs.spring.boot.starter.web
 }

@@ -2,13 +2,13 @@ package de.hswt.fi.application;
 
 import de.hswt.fi.security.service.api.SecurityService;
 import de.hswt.fi.security.service.model.RegisteredUser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SecurityServiceTest extends AbstractTest {
 

@@ -17,6 +17,8 @@ public class I18nKeys {
 	public static final String RTI_MODEL_ADJUSTED_LOG_D = "RTI_MODEL_ADJUSTED_LOG_D";
 	public static final String RTI_MODEL_ADJUSTED_DELTA_LOG_D = "RTI_MODEL_ADJUSTED_DELTA_LOG_D";
 	public static final String RTI_MODEL_RTI = "RTI_MODEL_RTI";
+	public static final String RTI_SIGNAL_MODEL_RTI = "RTI_SIGNAL_MODEL_RTI";
+	public static final String RTI_DELTA_SIGNAL_MODEL_RTI = "RTI_DELTA_SIGNAL_MODEL_RTI";
 	public static final String RTI_MODEL_RESULT_SUMMARY_TITLE = "RTI_MODEL_RESULT_SUMMARY_TITLE";
 	// RTI definition
 	public static final String RTI_FILE_NAME = "RTI_FILE_NAME";

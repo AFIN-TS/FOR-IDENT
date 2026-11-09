@@ -1,0 +1,42 @@
+# systemd unit for FOR-IDENT 3.x (Java 21), see deploy/README.md
+# Install: /etc/systemd/system/for-ident.service, then systemctl daemon-reload
+[Unit]
+Description=FOR-IDENT web application
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=forident
+Group=forident
+WorkingDirectory=/opt/for-ident
+# Database passwords, mail login and other settings (FI_* variables), readable only by root and forident
+EnvironmentFile=/etc/for-ident/for-ident.env
+# No -javaagent any more: the JPA entities are woven at build time (since 2.0).
+# The log goes to the journal (logback-console.xml, no log file since 3.0): journalctl -u for-ident; its retention
+# is that of journald.
+# A JVM out of memory exits and is restarted by systemd instead of running on in a broken state.
+# JNA (native InChI library of MetFrag) unpacks into the private /tmp, as the home directory is not accessible.
+ExecStart=/usr/lib/jvm/java-21-openjdk-amd64/bin/java -Xms1G -Xmx4G -XX:+ExitOnOutOfMemoryError \
+	-Djna.tmpdir=/tmp/jna \
+	-jar /opt/for-ident/de.hswt.fi.application.jar \
+	--spring.profiles.active=lc \
+	--logging.config=classpath:logback-console.xml \
+	--spring.web.resources.static-locations=file:///opt/for-ident/html/
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+# Uploaded files are kept in the session directory below java.io.tmpdir (deleted on logout/session end);
+# a private /tmp keeps them away from other services
+PrivateTmp=true
+NoNewPrivileges=true
+# The service needs no write access outside its /tmp (SP-16)
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,5 @@
-project.ext.projectVersion = new ProjectVersion(1,0,System.env.BUILD_NUMBER)
+// Version 3.0: Java 21, Spring Boot 4.1, Vaadin Flow 25 (SP-10 to SP-17). Release builds set BUILD_NUMBER, e.g. 0 -> 3.0.0
+project.ext.projectVersion = new ProjectVersion(3,0,System.env.BUILD_NUMBER)
 
 class ProjectVersion {
 	Integer major

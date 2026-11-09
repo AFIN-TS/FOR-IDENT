@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,8 @@ import java.util.Stack;
 
 @Service
 @SuppressWarnings("unused")
+// Needs the pathway database (SP-16)
+@ConditionalOnProperty(name = "spring.datasource.pathway.enabled", havingValue = "true")
 public class DefaultTransformationPathImporterService
 		implements TransformationProductImportService {
 

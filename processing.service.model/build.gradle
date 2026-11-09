@@ -1,9 +1,9 @@
 dependencies {
-	compile project(":msms.service.api")
-	compile project(":msms.service.model")
-	compile project(":common")
-	compile project(":search.service.search.api")
-	compile project(":search.service.mass.search.model")
-	compile project(":search.service.index.rti.model")
-	compile project(":search.service.tp.model")
+	api project(":msms.service.api")
+	api project(":msms.service.model")
+	api project(":common")
+	api project(":search.service.search.api")
+	api project(":search.service.mass.search.model")
+	api project(":search.service.index.rti.model")
+	api project(":search.service.tp.model")
 }

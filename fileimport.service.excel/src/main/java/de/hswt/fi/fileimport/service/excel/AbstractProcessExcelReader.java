@@ -84,7 +84,15 @@ public abstract class AbstractProcessExcelReader extends ExcelReader {
 			return Collections.emptyList();
 		}
 
-		return extractRTICalculationData(sheetDefinition, sheet);
+		List<RTICalibrationData> features = extractRTICalculationData(sheetDefinition, sheet);
+
+		try {
+			sheet.getWorkbook().close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return features;
 	}
 
 	private List<RTICalibrationData> extractRTICalculationData(SheetDefinition sheetDefinition, Sheet sheet) {

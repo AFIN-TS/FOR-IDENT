@@ -1,5 +1,5 @@
 dependencies {
-	compile project(":model")
+	api project(":model")
 	
-	compile "org.springframework.boot:spring-boot-starter-data-mongodb"
+	api libs.spring.boot.starter.data.mongodb
 }

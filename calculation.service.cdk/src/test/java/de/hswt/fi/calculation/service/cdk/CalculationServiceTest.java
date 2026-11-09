@@ -1,12 +1,12 @@
 package de.hswt.fi.calculation.service.cdk;
 
 import de.hswt.fi.calculation.service.api.CalculationService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ActiveProfiles("test")
 public class CalculationServiceTest {
@@ -19,7 +19,7 @@ public class CalculationServiceTest {
 		return Math.abs(expected - observed) < EPSILON;
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		calculationService = new CdkCalculationService();
 	}

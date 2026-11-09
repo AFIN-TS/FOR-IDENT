@@ -4,7 +4,7 @@ import de.hswt.fi.security.service.model.RegisteredUser;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.annotation.AccessType.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Properties;
 

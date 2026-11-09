@@ -9,6 +9,7 @@ import de.hswt.fi.search.service.tp.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,8 @@ import java.util.concurrent.FutureTask;
 
 @Component
 @Scope("prototype")
+// Needs the pathway database (SP-16)
+@ConditionalOnProperty(name = "spring.datasource.pathway.enabled", havingValue = "true")
 public class DefaultTransformationProductSearchService implements TransformationProductSearchService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultTransformationProductSearchService.class);

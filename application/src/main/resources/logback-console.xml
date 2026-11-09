@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Console only, for the systemd service (SP-16): the journal keeps the log with its own retention, so no log file
+     is written (logback.xml with the file of the profile lc stays for 2.x-style installations and development).
+     Selected in deploy/for-ident.service with logging.config. More detail: LOGGING_LEVEL_DE_HSWT_FI=DEBUG in the
+     environment file. -->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

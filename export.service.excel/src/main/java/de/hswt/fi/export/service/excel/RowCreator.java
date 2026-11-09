@@ -10,8 +10,6 @@ import java.util.*;
 
 class RowCreator {
 
-	public static final int IMAGE_WIDTH = 220;
-	public static final int IMAGE_HEIGHT = 220;
 	private static final String STRUCTURE_POSTFIX = "structure";
 	private Object bean;
 	private CalculationService calculationService;
@@ -149,8 +147,13 @@ class RowCreator {
 
 		if (Number.class.isAssignableFrom(column.getType()) && !value.isEmpty()) {
 			try {
-				cellValue.setValue(format.parse(value).doubleValue());
-				cellValue.setFormat(column.getFormatDefinition());
+				double number = format.parse(value).doubleValue();
+				// Missing values (NaN) stay empty. Up to Java 8 NaN was formatted as U+FFFD, which could not be parsed;
+				// since Java 9 it is "NaN", which would end up as error value #NUM! in Excel
+				if (!Double.isNaN(number)) {
+					cellValue.setValue(number);
+					cellValue.setFormat(column.getFormatDefinition());
+				}
 			} catch (ParseException e) {
 				// No logging here because of enormous log output when downloading results
 			}
@@ -212,8 +215,8 @@ class RowCreator {
 	}
 
 	private byte[] getImage(String smiles) {
-		if (calculationService == null || !calculationService.isAvailable()) return new byte[0];
-		return calculationService.getSmilesAsImage(smiles, IMAGE_WIDTH, IMAGE_HEIGHT);
+		if (calculationService == null || !calculationService.isAvailable()) return null;
+		return calculationService.getSmilesAsImage(smiles, 220, 220);
 	}
 
 	public static class CellValue {

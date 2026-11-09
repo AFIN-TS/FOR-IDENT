@@ -6,8 +6,9 @@ import de.hswt.fi.search.service.mass.search.model.properties.*;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = JpaPreferences.TABLE_NAME_ENTRY)
@@ -165,27 +166,34 @@ public class Entry {
 	}
 
 	public Set<NumberValueProperty> getLogpValues() {
-		return Collections.unmodifiableSet(logpValues);
+		return logpValues.stream().filter(Objects::nonNull).sorted(Comparator.comparingDouble(LogPNumberProperty::getValue))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public Set<NumberValueProperty> getLogdValues() {
-		return Collections.unmodifiableSet(logdValues);
+		return logdValues.stream().filter(Objects::nonNull).filter(logD -> logD.getPh() != null)
+				.sorted(Comparator.comparingDouble(LogDNumberProperty::getPh))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public Set<StringValueProperty> getAdditionalNames() {
-		return Collections.unmodifiableSet(additionalNames);
+		return additionalNames.stream().filter(Objects::nonNull).sorted(AbstractStringProperty::compareTo)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public Set<StringValueProperty> getMassBankIds() {
-		return Collections.unmodifiableSet(massBankIds);
+		return massBankIds.stream().filter(Objects::nonNull).sorted(AbstractStringProperty::compareTo)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public Set<CategoryStringProperty> getCategories() {
-		return categories;
+		return categories.stream().filter(Objects::nonNull).sorted(AbstractStringProperty::compareTo)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public Set<SourceList> getSourceLists() {
-		return sourceLists;
+		return sourceLists.stream().filter(Objects::nonNull).sorted(Comparator.comparing(SourceList::getDescription))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	public String getPublicID() {

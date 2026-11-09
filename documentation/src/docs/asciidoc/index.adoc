@@ -22,64 +22,41 @@ Currently FOR-IDENT is build upon the following technologies:
 
 
 === Server
-
-==== Kontakt
-https://servicedesk.lrz.de/
-
-==== Details:
-Bestellt von: Tobias Placht (LRZ Kennung: di73ten2)
-VM-Name (max. 7 Zeichen): RIP
-OS: Debian 8
-Anzahl vCPU (1-8): 8
-RAM (1-32 GB): 16 GB
-Größe Systemfestplatte (ab 10 GB): 30GB
-(optional)weitere Festplatten: Größe und Mountpunkt / Ordnername): 70 GB /srv/data
-Benötigte Erreichbarkeit der VM (MWN oder weltweit): Weltweit
-IP-Adresse(n) / Subnetze, die SSH-Zugriff erhalten sollen (notwendig!): Subnetz 10.154.4
-
-===== User
-Siehe: https://it-wiki.hswt.de/wiki/PW-BT#forident
+Host-specific details (hosting provider, VM sizing, IP addresses, network rules, user accounts and
+credentials) are not stored in this repository. They are maintained by the operating organisation.
 
 ==== Installlation Details
 
-====== Java 8
-Link: http://www.webupd8.org/2014/03/how-to-install-oracle-java-8-in-debian.html
-
-echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list
-echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
-apt-get update
-apt-get install oracle-java8-installer
+===== Java
+Install a Java runtime matching the version required by the build (see README).
 
 ===== Postgresql:
-Link: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-9-4-on-debian-8
 
-apt install postgresql-9.4 postgresql-client-9.4
-
-Als "postgres" user verbinden
+Connect as the "postgres" user
 su - postgres
 psql
 
-Neuen Benutzer hinzufügen (als Benutzer postgres)
+Add a new user (as user postgres)
 createuser --interactive
 
-Datenbank hinzufügen
+Add a database
 createdb fi-production
 
 ==== Open Port for PSQL
-Add line in iptables
-iptables -A INPUT -p tcp -s 10.154.4.0/255.255.255.0 -d 138.246.224.112 --dport 5432 -m tcp -j ACCEPT
+Allow access to port 5432 only from the application server or an internal management subnet,
+for example with iptables:
+iptables -A INPUT -p tcp -s <MANAGEMENT_SUBNET> -d <DB_SERVER_IP> --dport 5432 -m tcp -j ACCEPT
 
 Accept connection in PSQL
-/etc/postgresql/9.4/main/postgresql.conf
+/etc/postgresql/<VERSION>/main/postgresql.conf
 ....
-listen_addresses = '*'
+listen_addresses = '<DB_SERVER_IP>'
 ....
 
-Accept connection type
-/etc/postgresql/9.4/main/pg_hba.conf
+Accept connection type (restrict to the application server address)
+/etc/postgresql/<VERSION>/main/pg_hba.conf
 ....
-host    all             all             0.0.0.0/0               md5
+host    all             all             <APP_SERVER_IP>/32               md5
 ....
 
 ==== Native Libraries
@@ -89,12 +66,14 @@ jnati (0.8) / jniinchi
 .jnati/repo/jniinchi/1.03_1/LINUX_AMD64/MANIFEST.xml
 
 ===== Nginx
-Link: https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-debian-8
 
 apt install nginx
 
 ===== FI starten
-java -javaagent:spring-instrument-4.2.4.RELEASE.jar
+Database connections and the mail server are configured through environment variables
+(see README, section "Configuration").
+
+java -javaagent:spring-instrument-<VERSION>.jar
 -jar de.hswt.fi.application-XXX.jar
 --spring.profiles.active=production
 --server.port=8080 > /dev/null 2>&1 &

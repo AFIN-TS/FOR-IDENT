@@ -1,6 +1,6 @@
 dependencies {
-    compile project(":calculation.service.api")
+    api project(":calculation.service.api")
 
-    compile "org.openscience.cdk:cdk-bundle"
-    compile "org.springframework.boot:spring-boot-starter"
+    api libs.cdk.bundle
+    api libs.spring.boot.starter.core
 }

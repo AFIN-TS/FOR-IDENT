@@ -1,5 +1,5 @@
 dependencies {
-    compile "org.apache.commons:commons-lang3"
-    compile "commons-beanutils:commons-beanutils"
-    compile "org.springframework.boot:spring-boot-starter"
+    api libs.commons.lang3
+    api libs.commons.beanutils
+    api libs.spring.boot.starter.core
 }

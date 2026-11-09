@@ -1,149 +1,149 @@
 plugins {
-	id "org.asciidoctor.convert" version "1.5.6"
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.asciidoctor)
+	// Builds the frontend bundle of the Vaadin Flow UI into the JAR (production mode; downloads Node.js if needed)
+	alias(libs.plugins.vaadin)
 }
 
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
-
-apply from: "$rootDir/gradle/versioning.gradle"
 group = "de.hswt.fi"
-version = project.projectVersion
-
-configurations {
-	runtimeAgent
-}
-dependencies {
-	runtimeAgent("org.springframework:spring-instrument:5.1.8.RELEASE")
-}
-
-// Fix for windows too long classpath
-task pathingJar(type: Jar) {
-	dependsOn configurations.runtime
-	appendix = 'pathing'
-
-	doFirst {
-		manifest {
-			attributes "Class-Path": configurations.runtime.files.collect {
-				it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/').replaceAll(' ', '%20')
-			}.join(" ")
-		}
-	}
-}
 
 def profiles = 'development'
 
+// Gradle shortens the too long Windows command line itself (formerly the pathingJar task)
 bootRun {
-	dependsOn pathingJar
-	doFirst {
-		classpath = files(sourceSets.main.output.files, pathingJar.archivePath)
-	}
-	jvmArgs = ["-javaagent:${configurations.runtimeAgent.asPath}"]
 	args = ["--spring.profiles.active=" + profiles]
 }
 
 bootJar {
-	classifier = 'boot'
-	archiveName = 'de.hswt.fi.application.jar'
+	archiveClassifier = 'boot'
+	archiveFileName = 'de.hswt.fi.application.jar'
+	// No layer index and layertools JAR (new in the Spring Boot 2.7 plugin), as in the JAR built so far
+	layered {
+		enabled = false
+	}
 	manifest {
 		attributes("Implementation-Version": project.projectVersion)
 	}
 }
 
 dependencies {
-	compile project(":application.properties")
-	compile project(":beans")
-	compile project(":calculation.service.api")
-	compile project(":calculation.service.cdk")
-	compile project(":calculation.service.rti.api")
-	compile project(":calculation.service.rti.default")
-	compile project(":common")
-	compile project(":database.importer.compounds.api")
-	compile project(":database.importer.compounds.excel")
-	compile project(":database.importer.tp.api")
-	compile project(":database.importer.tp.default")
-	compile project(":database.importer.tp.envipath")
-	compile project(":documentation")
-	compile project(":export.service.excel")
-	compile project(":filehandler")
-	compile project(":fileimport.service.api")
-	compile project(":fileimport.service.csv")
-	compile project(":fileimport.service.default")
-	compile project(":fileimport.service.excel")
-	compile project(":fileimport.service.excel.formats")
-	compile project(":fileimport.service.json")
-	compile project(":fileimport.service.mzml")
-	compile project(":fileimport.service.txt")
-	compile project(":fileimport.service.xml")
-	compile project(":gradle")
-	compile project(":i18n.vaadin")
-	compile project(":libraries")
-	compile project(":mail.service")
-	compile project(":model")
-	compile project(":msms.service.api")
-	compile project(":msms.service.metfrag")
-	compile project(":msms.service.model")
-	compile project(":processing.service.api")
-	compile project(":processing.service.default")
-	compile project(":processing.service.model")
-	compile project(":resources")
-	compile project(":search.service.mass.search.api")
-	compile project(":search.service.mass.search.default")
-	compile project(":search.service.mass.search.model")
-	compile project(":search.service.index.api")
-	compile project(":search.service.index.model")
-	compile project(":search.service.index.henry")
-	compile project(":search.service.index.henry.model")
-	compile project(":search.service.index.rti")
-	compile project(":search.service.index.rti.model")
-	compile project(":search.service.search.api")
-	compile project(":search.service.search.stoffident")
-	compile project(":search.service.search.plantident")
-	compile project(":search.service.search.duftstoffident")
-	compile project(":search.service.tp.api")
-	compile project(":search.service.tp.default")
-	compile project(":search.service.tp.model")
-	compile project(":security.service.api")
-	compile project(":security.service.model")
-	compile project(":security.service.vaadin")
-	compile project(":ui.vaadin")
-	compile project(":userproperties.service.api")
-	compile project(":userproperties.service.default")
-	compile project(":userproperties.service.model")
-	compile project(":web.service.default")
+	implementation project(":application.properties")
+	implementation project(":beans")
+	implementation project(":calculation.service.api")
+	implementation project(":calculation.service.cdk")
+	implementation project(":calculation.service.rti.api")
+	implementation project(":calculation.service.rti.default")
+	implementation project(":common")
+	implementation project(":database.importer.compounds.api")
+	implementation project(":database.importer.compounds.excel")
+	implementation project(":database.importer.tp.api")
+	implementation project(":database.importer.tp.default")
+	implementation project(":database.importer.tp.envipath")
+	implementation project(":documentation")
+	implementation project(":export.service.excel")
+	implementation project(":filehandler")
+	implementation project(":fileimport.service.api")
+	implementation project(":fileimport.service.csv")
+	implementation project(":fileimport.service.default")
+	implementation project(":fileimport.service.excel")
+	implementation project(":fileimport.service.excel.formats")
+	implementation project(":fileimport.service.json")
+	implementation project(":fileimport.service.mzml")
+	implementation project(":fileimport.service.txt")
+	implementation project(":fileimport.service.xml")
+	implementation project(":mail.service")
+	implementation project(":model")
+	implementation project(":msms.service.api")
+	implementation project(":msms.service.metfrag")
+	implementation project(":msms.service.model")
+	implementation project(":processing.service.api")
+	implementation project(":processing.service.default")
+	implementation project(":processing.service.model")
+	implementation project(":search.service.mass.search.api")
+	implementation project(":search.service.mass.search.default")
+	implementation project(":search.service.mass.search.model")
+	implementation project(":search.service.index.api")
+	implementation project(":search.service.index.model")
+	implementation project(":search.service.index.henry")
+	implementation project(":search.service.index.henry.model")
+	implementation project(":search.service.index.rti")
+	implementation project(":search.service.index.rti.model")
+	implementation project(":search.service.search.api")
+	implementation project(":search.service.search.stoffident")
+	implementation project(":search.service.search.plantident")
+	implementation project(":search.service.search.duftstoffident")
+	implementation project(":search.service.tp.api")
+	implementation project(":search.service.tp.default")
+	implementation project(":search.service.tp.model")
+	implementation project(":security.service.api")
+	implementation project(":security.service.model")
+	implementation project(":security.service.vaadin")
+	implementation project(":ui.flow")
+	implementation project(":userproperties.service.api")
+	implementation project(":userproperties.service.default")
+	implementation project(":userproperties.service.model")
+	implementation project(":web.service.default")
 
-	runtime "org.postgresql:postgresql"
-	runtime "org.eclipse.persistence:eclipselink"
-	runtime "com.h2database:h2"
+	implementation libs.spring.boot.starter.actuator
+	implementation libs.flyway.core
+	runtimeOnly libs.flyway.postgresql
+	runtimeOnly libs.postgresql
+	runtimeOnly libs.eclipselink.core
+	runtimeOnly libs.h2
+	// Vaadin development mode for bootRun only, not part of the JAR
+	developmentOnly libs.vaadin.dev
 
-	testCompile "org.springframework.security:spring-security-test"
-	testCompile "org.springframework.restdocs:spring-restdocs-mockmvc"
-}
-
-// Taken from https://github.com/spring-projects/spring-restdocs
-// ext['spring-restdocs.version'] = '1.2.1.RELEASE'
-
-// defer resolution until execution time
-ext { snippetsDir = file('build/generated-snippets') }
-
-
-test.doFirst {
-	jvmArgs = ["-javaagent:${configurations.runtimeAgent.asPath}"]
+	testImplementation libs.spring.security.test
+	testImplementation libs.spring.boot.resttestclient
+	testImplementation libs.spring.boot.restclient
 }
 
 test {
 	systemProperty 'spring.profiles.active', 'test'
-	outputs.dir snippetsDir
+}
+
+// Regression tests (SP-03): compare import, processing, export and REST API results with golden files.
+// They need the local databases (see dev/README.md) and are therefore not part of "build";
+// run them with dev/run-regression.ps1. -Dregression.update=true rewrites the golden files.
+sourceSets {
+	regressionTest {
+		// Sources and resources by convention in src/regressionTest/java and src/regressionTest/resources
+		// Not the output of src/test: its TestApplicationContext clears the user database on startup
+		compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+		runtimeClasspath += output + compileClasspath
+	}
+}
+
+task regressionTest(type: Test) {
+	description = 'Runs the regression tests against the local databases (see dev/README.md).'
+	group = 'verification'
+	testClassesDirs = sourceSets.regressionTest.output.classesDirs
+	classpath = sourceSets.regressionTest.runtimeClasspath
+	systemProperty 'regression.rootDir', rootProject.projectDir
+	// Own directory for the session temporary files, so the tests do not touch a running local application
+	systemProperty 'de.hswt.fi.session-temp-directory', file("${layout.buildDirectory.get().asFile}/regression/sessions")
+	systemProperty 'regression.goldenDir', file('src/regressionTest/resources/golden')
+	systemProperty 'regression.actualDir', file("${layout.buildDirectory.get().asFile}/regression/actual")
+	systemProperty 'regression.update', System.getProperty('regression.update', 'false')
+	systemProperty 'regression.productionUrl', System.getProperty('regression.productionUrl', '')
+	systemProperty 'regression.exportRepeat', System.getProperty('regression.exportRepeat', '3')
+	// The Vaadin UI starts in production mode as in the JAR (the tests do not use it; vaadin-dev is not on the classpath)
+	systemProperty 'vaadin.productionMode', 'true'
+	outputs.upToDateWhen { false }
+	testLogging {
+		events 'passed', 'failed'
+		exceptionFormat = 'full'
+	}
+	maxHeapSize = '3G'
 }
 
 
-asciidoctor {
-	attributes \
-        'snippets': snippetsDir
-	outputDir snippetsDir
-	dependsOn test
-}
+// API overview (src/docs/asciidoc/api.adoc): gradlew :application:asciidoctor writes build/docs/asciidoc/api.html.
+// The complete description is generated from the code at runtime: /api/openapi and the Swagger UI /api/docs (SP-14);
+// the REST Docs tests that were meant to produce request/response snippets (never active) were removed.
 
-jar {
-	dependsOn asciidoctor
-	from ("${asciidoctor.outputDir}/html5") { into 'static/' }
+// The JAR always contains the production frontend bundle (SP-11); the development mode (vaadin-dev) is only on the
+// bootRun classpath
+vaadin {
+	productionMode = true
 }

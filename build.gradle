@@ -1,49 +1,68 @@
 plugins {
-    id "io.spring.dependency-management" version "1.0.6.RELEASE"
-    id "org.sonarqube" version "2.6.2"
-    id "org.zeroturnaround.gradle.jrebel" version "1.1.8"
-    id "org.springframework.boot" version "2.1.3.RELEASE"
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management) apply false
+    alias(libs.plugins.asciidoctor) apply false
+    alias(libs.plugins.dependency.check)
+    alias(libs.plugins.vaadin) apply false
 }
 
-// Dependency Versions
-ext {
-    springBootVersion = "2.1.3.RELEASE"
-    vaadinVersion = "8.7.0"
-    vaadinSpringVersion = "3.1.1"
-    vaadinSpringAddons = "2.0.0.RELEASE"
-    vaadinSpringExtensions = "2.0.0.RELEASE"
-    cdkVersion = "2.0"
-}
-
-wrapper.gradleVersion = '5.1'
-
-// Sonar configuration
-apply plugin: "org.sonarqube"
-def combinedTestCoverageFile = "$rootDir/build/jacoco/allTestCoverage.exec"
-sonarqube {
-    properties {
-        property "sonar.projectVersion", System.getenv("BUILD_NUMBER")
-        property "sonar.java.binaries", "."
-        property "sonar.sources", "src"
-        property "sonar.language", "java"
-        property "sonar.binaries", "build/classes"
-        property "sonar.jacoco.reportPaths", combinedTestCoverageFile
-        property "sonar.coverage.exclusions", "**/*application*/*, **/*api/**/*, **/*beans/*, **/*model/**/*, **/resources/**/*, **/*vaadin/**/*"
+// Dependency scan (SP-04): gradlew dependencyCheckAggregate writes build/reports/dependency-check-report.html.
+// An NVD API key (https://nvd.nist.gov/developers/request-an-api-key) in NVD_API_KEY speeds up the first download.
+dependencyCheck {
+    formats = ["HTML", "JSON"]
+    scanConfigurations = ["runtimeClasspath"]
+    // Documented false positives
+    suppressionFile = "$rootDir/gradle/dependency-check-suppressions.xml"
+    nvd {
+        apiKey = System.getenv("NVD_API_KEY") ?: ""
+    }
+    analyzers {
+        // OSS Index needs an account since 2025; the NVD data is used instead
+        ossIndex {
+            enabled = false
+        }
+        assemblyEnabled = false
+        nodeEnabled = false
+        nodeAudit {
+            enabled = false
+        }
+        retirejs {
+            enabled = false
+        }
     }
 }
 
 subprojects {
 
-    apply plugin: "java"
-    apply plugin: "rebel"
+    apply plugin: "java-library"
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    apply from: "$rootDir/gradle/versioning.gradle"
+    version = project.projectVersion
+    // The UI shows the Implementation-Version of its own module JAR (SideBar, admins only)
+    tasks.named("jar") {
+        manifest {
+            attributes("Implementation-Title": project.name, "Implementation-Version": project.projectVersion)
+        }
+    }
 
-    compileJava.options.encoding = 'UTF-8'
-    compileTestJava.options.encoding = 'UTF-8'
+    // Compiling, tests and bootRun use Java 21 (SP-10; found automatically, independent of the JDK running Gradle)
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
 
-    apply plugin: "eclipse"
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = "UTF-8"
+        // Parameter names in the class files: Spring 6.1+ needs them for @RequestParam/@PathVariable without an explicit
+        // name (SP-10); the Spring Boot plugin only sets this for the application module
+        options.compilerArgs << "-parameters"
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
     apply plugin: "idea"
 
     idea {
@@ -52,28 +71,18 @@ subprojects {
         }
     }
 
-    repositories() {
+    repositories {
         mavenCentral()
-        maven { url = "https://maven.vaadin.com/vaadin-prereleases" }
-        maven { url = "http://maven.vaadin.com/vaadin-addons" }
-        maven { url = "https://oss.sonatype.org/content/repositories/snapshots" }
-        maven { url = "http://repo.spring.io/repo/" }
-        maven { url = "http://www.ebi.ac.uk/~maven/m2repo" }
-
-        // Needed for jmzml related dependency
-        maven { url = "http://repo.spring.io/plugins-release/" }
+        // jmzml and its psidev dependencies (the old ~maven/m2repo serves POMs but no longer the JARs)
+        maven { url = "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" }
+        // repo.spring.io/repo and /plugins-release no longer serve artifacts anonymously (HTTP 405)
         flatDir {
             dirs "$rootProject.projectDir/libraries/metfrag"
-            dirs "$rootProject.projectDir/libraries/chemspider"
-            dirs "$rootProject.projectDir/libraries/custom"
         }
     }
 
-    sonarqube {
-        properties {
-            property "sonar.jacoco.reportPaths", combinedTestCoverageFile
-        }
-    }
+    // Newer versions than in the Spring Boot BOM (security fixes, see libs.versions.toml)
+    ext["mongodb.version"] = libs.versions.mongodb.get()
 
     // Manage transitive dependencies
     apply plugin: "io.spring.dependency-management"
@@ -81,14 +90,14 @@ subprojects {
     dependencyManagement {
 
         imports {
-            mavenBom "com.vaadin:vaadin-bom:$vaadinVersion"
-            mavenBom "org.springframework.boot:spring-boot-dependencies:$springBootVersion"
+            mavenBom libs.spring.boot.dependencies.get().toString()
+            mavenBom libs.vaadin.bom.get().toString()
         }
 
         dependencies {
 
             //Syntactic Sugar
-            dependencySet(group: "org.springframework.boot", version: "$springBootVersion") {
+            dependencySet(group: "org.springframework.boot", version: libs.versions.spring.boot.get()) {
                 entry "spring-boot-starter"
                 entry "spring-boot-starter-web"
                 entry "spring-boot-starter-logging"
@@ -100,102 +109,69 @@ subprojects {
                 entry("spring-boot-starter-data-jpa")
             }
 
-            dependencySet(group: 'com.vaadin', version: "$vaadinSpringVersion") {
-                entry "vaadin-spring"
-                entry "vaadin-spring-boot"
-                entry "vaadin-spring-boot-starter"
-            }
-
-            dependencySet(group: "org.vaadin.spring.extensions", version: "$vaadinSpringExtensions") {
-                entry "vaadin-spring-ext-security"
-                entry "vaadin-spring-ext-core"
-                entry "vaadin-spring-ext-boot"
-            }
-
-            dependencySet(group: "org.vaadin.spring.addons", version: "$vaadinSpringAddons") {
-                entry "vaadin-spring-addon-eventbus"
-                entry "vaadin-spring-addon-sidebar"
-                entry "vaadin-spring-addon-i18n"
-            }
-            
-            dependency("org.openscience.cdk:cdk-bundle:2.0") {
-                // Do NOT use following dependencies due to strict GPL license!!
+            dependency(libs.cdk.bundle.get().toString()) {
+                // Not needed. (cdk-legacy, excluded before as "strict GPL", is LGPL 2.1 like all of CDK 2.11 and
+                // is needed by MetFragLib 2.6.11: SMARTSQueryTool of the neutral loss fragmenter)
                 exclude "org.openscience.cdk:cdk-qsaratomic"
-                exclude "org.openscience.cdk:cdk-legacy"
             }
 
             // Common
-            dependency "org.apache.commons:commons-text:1.3"
-            dependency "org.apache.commons:commons-lang3:3.6"
-            dependency "commons-beanutils:commons-beanutils:1.9.3"
-            dependency "commons-validator:commons-validator:1.6"
-            dependency "com.google.guava:guava:23.0"
-            dependency "com.google.code.gson:gson:2.8.2"
-            dependency "javax.inject:javax.inject:1"
-            dependency "javax.servlet:javax.servlet-api:4.0.0"
+            dependency libs.commons.text.get().toString()
+            dependency libs.commons.lang3.get().toString()
+            dependency libs.commons.beanutils.get().toString()
+            dependency libs.commons.validator.get().toString()
+            dependency libs.guava.get().toString()
+            dependency libs.gson.get().toString()
 
             // DB related
-            dependency "org.postgresql:postgresql:42.1.4"
+            dependency libs.postgresql.get().toString()
 
-            dependency ("org.eclipse.persistence:eclipselink:2.7.3") {
-                exclude "org.eclipse.persistence:javax.persistence"
-            }
-            dependency "org.eclipse.persistence:org.eclipse.persistence.jpa:2.7.3"
+            dependency libs.eclipselink.core.get().toString()
+            dependency libs.eclipselink.jpa.get().toString()
 
-            dependency "com.h2database:h2:1.4.197"
-            
-            dependency("org.openscience.cdk:cdk-bundle:2.0")
-            dependency "org.codehaus.woodstox:woodstox-core-asl:4.4.1"
-            dependency "org.owasp.encoder:encoder:1.2.1"
+            dependency libs.owasp.encoder.get().toString()
 
             // Specific versioned dependencies is necessary at the moment
-            dependency "org.apache.poi:poi-ooxml:3.13"
-            dependency "xml-apis:xml-apis:1.4.01"
-
-
-            dependency "javax.el:javax.el-api:3.0.0"
+            dependency libs.poi.ooxml.get().toString()
+            dependency libs.xml.apis.get().toString()
+            // jmzML needs the javax.xml.bind JAXB 2.3 runtime, not the JAXB 4 of the Spring Boot BOM (see libs.versions.toml)
+            dependency libs.jaxb.runtime.get().toString()
         }
     }
 
     dependencies {
-        testCompile 'junit:junit:4.12'
-        testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
+        testImplementation libs.spring.boot.starter.test
+        testRuntimeOnly libs.junit.platform.launcher
     }
 
-    // Disable transitive dependecnies
     configurations {
-        runtime.exclude group: "org.slf4j", module: "slf4j-log4j12"
-        runtime.exclude group: "org.eclipse.jetty", module: "jetty-server"
-        runtime.exclude group: "org.eclipse.jetty", module: "jetty-webapp"
-    }
-
-    // Coverage report of sub projects with combining task
-//    apply plugin: 'jacoco'
-//
-//    task combinedTest(type: Test) {
-//        jacoco {
-//            destinationFile = file(combinedTestCoverageFile)
-//        }
-//    }
-
-    // Quickfix for eclipse
-    eclipse {
-        classpath {
-            containers.remove("org.eclipse.jdt.launching.JRE_CONTAINER")
-            containers "org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"
-            // Following block of code is to remove .pom classpath entries in .classpath files
-            file {
-                whenMerged { classpath ->
-                    Iterator i = classpath.entries.iterator()
-                    while (i.hasNext()) {
-                        org.gradle.plugins.ide.eclipse.model.ClasspathEntryclasspathEntry = i.next()
-                        if (classpathEntry.kind.equals("lib") && classpathEntry.path.endsWith(".pom")) {
-                            println("Removing " + classpathEntry + " from classpath entry")
-                            i.remove()
-                        }
-                    }
-                }
+        // cpdetector (via jmzml) requires the SpringSource bundle of ANTLR 2.7.7, which was only
+        // available from repo.spring.io; use the identical artifact from Maven Central instead
+        configureEach {
+            resolutionStrategy.dependencySubstitution {
+                substitute module("org.antlr:com.springsource.antlr") using module("antlr:antlr:2.7.7")
+                // log4j 1.x (end of life, known vulnerabilities; used by CDK 2.0, MetFragLib and jnati): Apache's
+                // replacement with the same API, logging via Log4j 2 to Logback
+                substitute module("log4j:log4j") using module("org.apache.logging.log4j:log4j-1.2-api:${libs.versions.log4j2.get()}")
             }
+            // jmzml brings the old Codehaus Woodstox 4 (StAX parser); the maintained com.fasterxml.woodstox
+            // (via jackson-dataformat-xml) implements the same StAX API
+            exclude group: "org.codehaus.woodstox", module: "woodstox-core-asl"
+            // Old libraries with known vulnerabilities brought by CDK 2.0, not needed by the functions used
+            // (SP-07): Jena (RDF format), Xalan/Xerces (the JDK XML parser is used instead)
+            exclude group: "org.apache.jena"
+            exclude group: "xalan", module: "xalan"
+            exclude group: "xerces", module: "xercesImpl"
+            // Logging backend is Logback; Log4j 2 API calls (CDK, MetFragLib) are routed to it by log4j-to-slf4j
+            exclude group: "org.apache.logging.log4j", module: "log4j-core"
+            // JPA provider is EclipseLink (SP-10); the Spring Boot JPA starter would bring Hibernate along
+            exclude group: "org.hibernate.orm"
+        }
+        // Formerly excluded from "runtime", which all runtime and test runtime classpaths extended
+        [runtimeClasspath, testRuntimeClasspath].each {
+            it.exclude group: "org.slf4j", module: "slf4j-log4j12"
+            it.exclude group: "org.eclipse.jetty", module: "jetty-server"
+            it.exclude group: "org.eclipse.jetty", module: "jetty-webapp"
         }
     }
 }

@@ -17,17 +17,17 @@ import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.List;
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class InMemoryDatabase extends AbstractDatabase {
 	
-	private Vector<TopDownPrecursorCandidate> candidates;
+	private ArrayList<TopDownPrecursorCandidate> candidates;
 
 	public InMemoryDatabase(Settings settings) {
 		super(settings);
 	}
 
-	public Vector<String> getCandidateIdentifiers(List<String> candidateIdentifiers) {
+	public ArrayList<String> getCandidateIdentifiers(List<String> candidateIdentifiers) {
 		if (candidates == null) {
 			initialiseCandidatesFromMemory(candidateIdentifiers);
 		}
@@ -47,16 +47,10 @@ public class InMemoryDatabase extends AbstractDatabase {
 				logger.error("An error occured", e);
 			}
 		}
-		if (settings.get("DatabaseSearchRelativeMassDeviation") != null) {
-			try {
-				return getCandidateIdentifiers(
-						(Double) settings.get("NeutralPrecursorMass"),
-						(Double) settings.get("DatabaseSearchRelativeMassDeviation"));
-			} catch (Exception e) {
-				logger.error("An error occured", e);
-			}
-		}
-		Vector<String> identifiers = new Vector<>();
+		// No second mass filter: the candidates come from the mass search of FOR-IDENT and are all scored.
+		// (The mass filter used before let all candidates pass because of a wrong comparison; with a correct
+		// comparison, candidates at the edge of the ppm window would be dropped, see SP-07.)
+		ArrayList<String> identifiers = new ArrayList<>();
 		for (TopDownPrecursorCandidate candidate : candidates) {
 			identifiers.add(candidate.getIdentifier());
 		}
@@ -64,8 +58,8 @@ public class InMemoryDatabase extends AbstractDatabase {
 	}
 
 	@Override
-	public Vector<String> getCandidateIdentifiers(double monoisotopicMass, double relativeMassDeviation) {
-		Vector<String> identifiers = new Vector<>();
+	public ArrayList<String> getCandidateIdentifiers(double monoisotopicMass, double relativeMassDeviation) {
+		ArrayList<String> identifiers = new ArrayList<>();
 		double mzabs = MathTools.calculateAbsoluteDeviation(monoisotopicMass,
 				relativeMassDeviation);
 		double lowerLimit = monoisotopicMass - mzabs;
@@ -74,13 +68,15 @@ public class InMemoryDatabase extends AbstractDatabase {
 			double currentMonoisotopicMass = 0.0D;
 			try {
 				currentMonoisotopicMass = MoleculeFunctions
-						.calculateMonoIsotopicMassExplicitHydrogens(
+						.calculateMonoIsotopicMassImplicitHydrogens(
 								MoleculeFunctions.convertExplicitToImplicitHydrogens(
 										candidate.getAtomContainer()));
 			} catch (Exception e) {
 				logger.error("An error occured", e);
 			}
-			if ((lowerLimit >= currentMonoisotopicMass)
+			// Mass window around the precursor mass. Formerly "lowerLimit >= mass", which only worked because the
+			// mass function of MetFragLib 2.3 ignored the implicit hydrogens (all candidates passed)
+			if ((lowerLimit <= currentMonoisotopicMass)
 					&& (currentMonoisotopicMass <= upperLimit)) {
 				identifiers.add(candidate.getIdentifier());
 			}
@@ -89,8 +85,8 @@ public class InMemoryDatabase extends AbstractDatabase {
 	}
 
 	@Override
-	public Vector<String> getCandidateIdentifiers(String molecularFormula) {
-		Vector<String> identifiers = new Vector<>();
+	public ArrayList<String> getCandidateIdentifiers(String molecularFormula) {
+		ArrayList<String> identifiers = new ArrayList<>();
 		IMolecularFormula queryFormula = MolecularFormulaManipulator
 				.getMolecularFormula(molecularFormula, new ChemObject().getBuilder());
 		for (TopDownPrecursorCandidate candidate : candidates) {
@@ -110,8 +106,8 @@ public class InMemoryDatabase extends AbstractDatabase {
 	}
 
 	@Override
-	public Vector<String> getCandidateIdentifiers(Vector<String> identifiers) {
-		Vector<String> verifiedIdentifiers = new Vector<>();
+	public ArrayList<String> getCandidateIdentifiers(ArrayList<String> identifiers) {
+		ArrayList<String> verifiedIdentifiers = new ArrayList<>();
 		for (String identifier : identifiers) {
 			try {
 				getCandidateByIdentifier(identifier);
@@ -135,7 +131,7 @@ public class InMemoryDatabase extends AbstractDatabase {
 	}
 
 	@Override
-	public CandidateList getCandidateByIdentifier(Vector<String> identifiers) {
+	public CandidateList getCandidateByIdentifier(ArrayList<String> identifiers) {
 		CandidateList candidateList = new CandidateList();
 		for (String identifier : identifiers) {
 			ICandidate candidate = null;
@@ -158,7 +154,7 @@ public class InMemoryDatabase extends AbstractDatabase {
 
 	private void initialiseCandidatesFromMemory(List<String> identifier) {
 		IAtomContainer[] molecules = (IAtomContainer[]) settings.get("MoleculeInMemory");
-		candidates = new Vector<>();
+		candidates = new ArrayList<>();
 		if (molecules == null) {
 			return;
 		}

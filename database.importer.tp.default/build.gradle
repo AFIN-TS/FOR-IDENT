@@ -1,9 +1,8 @@
 dependencies {
-	compile project(":database.importer.tp.api")
+	api project(":database.importer.tp.api")
 
-	compile project(":search.service.tp.default")
-	compile project(":search.service.tp.model")
+	api project(":search.service.tp.default")
+	api project(":search.service.tp.model")
 
-	compile "org.mongodb:mongo-java-driver"
-	compile "org.springframework.boot:spring-boot-starter-data-mongodb"
+	api libs.spring.boot.starter.data.mongodb
 }

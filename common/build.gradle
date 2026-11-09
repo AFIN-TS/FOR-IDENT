@@ -1,10 +1,8 @@
 dependencies {
-    compile ("org.apache.poi:poi-ooxml") {
-        exclude group: 'org.apache.xmlbeans', module: 'xmlbeans'
-    }
-    compile "org.apache.commons:commons-lang3"
-    compile "org.apache.commons:commons-text"
-    compile "com.google.guava:guava"
-    compile "org.owasp.encoder:encoder"
-    compile "org.springframework.boot:spring-boot-starter"
+    api libs.poi.ooxml
+    api libs.commons.lang3
+    api libs.commons.text
+    api libs.guava
+    api libs.owasp.encoder
+    api libs.spring.boot.starter.core
 }

@@ -1,0 +1,66 @@
+// Static weaving of the JPA entities (SP-05), applied by the modules that contain entities.
+// EclipseLink needs woven entities for lazy loading of to-one relations, change tracking and fetch groups.
+// Formerly this was done at runtime (load-time weaving with the spring-instrument -javaagent); now the
+// classes are woven right after compiling, and the entity managers use "eclipselink.weaving=static".
+
+configurations {
+	eclipselinkWeaving {
+		canBeConsumed = false
+	}
+}
+
+dependencies {
+	eclipselinkWeaving libs.eclipselink.core
+}
+
+def execOperations = project.services.get(ExecOperations)
+
+// Entities of other modules referenced by the entities of this module (fully qualified class names)
+ext.eclipselinkReferencedEntities = []
+
+tasks.named("compileJava") {
+	def classesDir = destinationDirectory
+	def wovenDir = layout.buildDirectory.dir("eclipselink/woven")
+	def weavingClasspath = configurations.eclipselinkWeaving
+	def compileClasspath = classpath
+	// The classes are Java 21 (SP-10), Gradle itself may run on an older JVM
+	def weavingLauncher = javaToolchains.launcherFor(java.toolchain)
+	doLast {
+		def classes = classesDir.get().asFile
+		// StaticWeave only weaves the entities of a persistence unit. A temporary unit in the classes
+		// directory finds all annotated classes of this module; it is not part of the JAR.
+		def persistenceXml = new File(classes, "META-INF/persistence.xml")
+		def referenced = project.eclipselinkReferencedEntities.collect { "\t\t<class>$it</class>\n" }.join("")
+		persistenceXml.parentFile.mkdirs()
+		persistenceXml.text = """<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd"
+		version="3.2">
+	<persistence-unit name="weaving">
+${referenced}		<exclude-unlisted-classes>false</exclude-unlisted-classes>
+	</persistence-unit>
+</persistence>
+"""
+		def target = wovenDir.get().asFile
+		project.delete(target)
+		try {
+			execOperations.javaexec {
+				executable = weavingLauncher.get().executablePath.asFile.absolutePath
+				classpath = weavingClasspath + compileClasspath
+				mainClass = "org.eclipse.persistence.tools.weaving.jpa.StaticWeave"
+				args "-classpath", compileClasspath.asPath, "-loglevel", "WARNING", classes, target
+			}
+		} finally {
+			persistenceXml.delete()
+			if (!persistenceXml.parentFile.list()) {
+				persistenceXml.parentFile.delete()
+			}
+		}
+		project.copy {
+			from target
+			into classes
+			exclude "META-INF/persistence.xml"
+		}
+	}
+}

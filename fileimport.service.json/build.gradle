@@ -1,6 +1,7 @@
 dependencies {
-	compile project(":fileimport.service.api")
-	compile "org.springframework.boot:spring-boot-starter-web"
+	api libs.jackson.databind
+	api project(":fileimport.service.api")
+	api libs.spring.boot.starter.web
 
-	testCompile project(":fileimport.service.api").sourceSets.test.output
+	testImplementation project(":fileimport.service.api").sourceSets.test.output
 }

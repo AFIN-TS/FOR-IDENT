@@ -1,4 +1,0 @@
-dependencies {
-    compile "com.vaadin:vaadin-spring-boot-starter"
-    compile "org.vaadin.spring.addons:vaadin-spring-addon-i18n"
-}

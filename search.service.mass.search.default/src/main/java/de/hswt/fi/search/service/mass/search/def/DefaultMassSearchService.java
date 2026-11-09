@@ -40,7 +40,8 @@ public class DefaultMassSearchService implements MassSearchService {
 		List<Feature> features = job.getFeatureSet().getFeatures();
 		FileSearchSettings settings = job.getSettings();
 
-		ExecutorService executor = Executors.newCachedThreadPool();
+		// One thread per CPU instead of one per feature: thousands of features exceeded the process limit of the server
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		for (Feature feature : features) {
 			Double mass = feature.getNeutralMass();
 			if (mass == null || mass.isNaN() || mass.isInfinite()) {

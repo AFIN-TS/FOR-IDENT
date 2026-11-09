@@ -2,7 +2,7 @@ package de.hswt.fi.common;
 
 /**
  * The Class SearchUtil is used to calculate the search range for masses out of
- * the ppm value. It also provided the mass values for H-atoms.
+ * the ppm value. It also provides the proton mass for the ion species +H/-H.
  * 
  * @author Marco Luthardt
  */
@@ -12,8 +12,11 @@ public final class SearchUtil {
 		throw new IllegalStateException("Static utility class should not be initialized");
 	}
 
-	/** The Constant H_MASS. */
-	static final double H_MASS = 1.0078;
+	/**
+	 * Mass of the proton in u (CODATA 2018), added for [M+H]+ and removed for [M-H]-. Up to 2.x/3.0.0 the mass of the
+	 * hydrogen atom (1.0078) was used, which shifted the neutral mass by 0.52 mDa (topic T6).
+	 */
+	static final double PROTON_MASS = 1.007276466621;
 
 	/**
 	 * Returns the +/- range value based on the mass and ppm. The value must be
@@ -44,9 +47,9 @@ public final class SearchUtil {
 		}
 		switch (ionisation) {
 		case POSITIVE_IONISATION:
-			return -H_MASS;
+			return -PROTON_MASS;
 		case NEGATIVE_IONISATION:
-			return H_MASS;
+			return PROTON_MASS;
 		default:
 			return 0.0;
 		}

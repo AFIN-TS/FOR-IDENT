@@ -1,6 +1,6 @@
 dependencies {
-	compile project(":userproperties.service.api")
-	compile project(":security.service.api")
+	api project(":userproperties.service.api")
+	api project(":security.service.api")
 	
-	compile "com.google.guava:guava"
+	api libs.guava
 }

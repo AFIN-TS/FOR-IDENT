@@ -1,5 +1,6 @@
 package de.hswt.fi.application;
 
+import de.hswt.fi.common.PasswordGenerator;
 import de.hswt.fi.common.spring.Profiles;
 import de.hswt.fi.security.service.api.SecurityService;
 import de.hswt.fi.security.service.model.Group;
@@ -12,6 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,11 +24,18 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
+    private static final String ADMIN_PASSWORD_PROPERTY = "FI_ADMIN_PASSWORD";
+
+    private static final int GENERATED_PASSWORD_LENGTH = 16;
+
     private final SecurityService securityService;
 
+    private final PasswordGenerator passwordGenerator;
+
     @Autowired
-    public ApplicationStartupListener(SecurityService securityService) {
+    public ApplicationStartupListener(SecurityService securityService, PasswordGenerator passwordGenerator) {
         this.securityService = securityService;
+        this.passwordGenerator = passwordGenerator;
     }
 
     @Override
@@ -31,11 +43,26 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
         Environment environment = contextRefreshedEvent.getApplicationContext().getEnvironment();
         if (environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Profiles.INITIALIZATION_LC, Profiles.INITIALIZATION_GC))) {
             LOGGER.debug("Running application in initialization mode!");
-            initAdminAccount(securityService);
+            initAdminAccount(securityService, getAdminPassword(environment));
         }
     }
 
-    private void initAdminAccount(SecurityService securityService) {
+    /**
+     * Returns the initial admin password from the environment variable FI_ADMIN_PASSWORD,
+     * or generates a random one and logs it once, so no default password is shipped.
+     */
+    private String getAdminPassword(Environment environment) {
+        String password = environment.getProperty(ADMIN_PASSWORD_PROPERTY);
+        if (password != null && !password.isEmpty()) {
+            return password;
+        }
+        password = passwordGenerator.generatePassword(GENERATED_PASSWORD_LENGTH);
+        LOGGER.warn("No {} set, generated initial password for user 'admin': {} (change it after the first login)",
+                ADMIN_PASSWORD_PROPERTY, password);
+        return password;
+    }
+
+    private void initAdminAccount(SecurityService securityService, String adminPassword) {
 
         LOGGER.debug("Creating groups and roles ...");
 
@@ -59,16 +86,27 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 
 		RegisteredUser adminUser = new RegisteredUser();
 		adminUser.setUsername("admin");
-		adminUser.setPassword("123456");
+		adminUser.setPassword(adminPassword);
 		adminUser.setFirstname("Administrator");
 		adminUser.setLastname("Administrator");
 		adminUser.setMail("admin@fi.de");
 		adminUser.setOrganisation("");
         adminUser.addGroup(groupAdmin);
 
-		securityService.createUser(adminUser);
-		adminUser.setEnabled(true);
-        securityService.updateUser(adminUser);
+        // createUser and updateUser are secured (@PreAuthorize). During initialization nobody is
+        // logged in, so the admin account is created with a temporary system authentication.
+        // An anonymous token is used, so the security expressions only check hasRole('ROLE_ADMIN').
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new AnonymousAuthenticationToken("initialization", "initialization",
+                AuthorityUtils.createAuthorityList(Role.ROLE_ADMIN.name())));
+        SecurityContextHolder.setContext(securityContext);
+        try {
+            securityService.createUser(adminUser);
+            adminUser.setEnabled(true);
+            securityService.updateUser(adminUser);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
 
 		LOGGER.debug("Everything done!");
     }

@@ -3,13 +3,11 @@ package de.hswt.fi.application;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.vaadin.spring.i18n.annotation.EnableI18N;
-import org.vaadin.spring.sidebar.annotation.EnableSideBar;
 
 @SpringBootApplication(scanBasePackages = Application.BASE_PACKAGE)
-@EnableSideBar
-@EnableI18N
+@EntityScan(basePackages = Application.BASE_PACKAGE)
 public class Application extends SpringBootServletInitializer {
 
 	static final String BASE_PACKAGE = "de.hswt.fi";
@@ -20,6 +18,11 @@ public class Application extends SpringBootServletInitializer {
 	}
 
 	public static void main(String[] args) {
+		// FreeMarker (mail templates) would pick Log4j 2 because its API is on the classpath (for CDK and MetFrag),
+		// but the logging backend is Logback (SP-10)
+		if (System.getProperty("org.freemarker.loggerLibrary") == null) {
+			System.setProperty("org.freemarker.loggerLibrary", "SLF4J");
+		}
 		SpringApplication.run(Application.class, args);
 	}
 }
