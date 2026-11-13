@@ -216,7 +216,6 @@ public class DefaultSecurityService implements SecurityService {
 		try {
 			updated = query.getSingleResult();
 			LOGGER.trace("found updated user in db: {}", updated.getUsername());
-			LOGGER.trace("found updated user in db pw: {}", updated.getPassword());
 		} catch (NoResultException e) {
 			LOGGER.error(e.getMessage(), e);
 		}

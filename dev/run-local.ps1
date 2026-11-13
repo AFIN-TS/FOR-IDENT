@@ -9,7 +9,7 @@
     build time, no -javaagent needed).
 
     -Init adds the profile initialization-lc: creates the schema of the user database,
-    the groups and the user "admin" (password FI_ADMIN_PASSWORD from the secrets file).
+    the groups and the user "admin" (password FI_ADMIN_PASSWORD and optional mail FI_ADMIN_MAIL from the secrets file).
     Run it once with -Init, stop it, then start normally.
 
 .EXAMPLE
@@ -44,6 +44,8 @@ Set-LocalDatabaseEnvironment $secrets
 if ($Init) {
     if (-not $secrets.FI_ADMIN_PASSWORD) { throw "FI_ADMIN_PASSWORD is missing in $SecretsFile" }
     $env:FI_ADMIN_PASSWORD = $secrets.FI_ADMIN_PASSWORD
+    # Required since 3.0.2; locally a reserved test domain is enough
+    $env:FI_ADMIN_MAIL = if ($secrets.FI_ADMIN_MAIL) { $secrets.FI_ADMIN_MAIL } else { "admin@example.test" }
     $Profiles = "$Profiles,initialization-lc"
 }
 

@@ -2,7 +2,9 @@
 # Install: /etc/systemd/system/for-ident.service, then systemctl daemon-reload
 [Unit]
 Description=FOR-IDENT web application
-After=network-online.target postgresql.service
+# docker.service: with Caddy in Docker the application listens on the docker0 address (SERVER_ADDRESS), which exists
+# only once Docker runs; without Docker the ordering has no effect
+After=network-online.target postgresql.service docker.service
 Wants=network-online.target
 
 [Service]

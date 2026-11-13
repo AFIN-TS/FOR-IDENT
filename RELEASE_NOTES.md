@@ -1,5 +1,20 @@
 # Release notes
 
+## 3.0.2 (2026)
+
+Security hotfix. Scientific results are the same as in 3.0.1.
+
+- Report mails ("report as faulty") show the text entered by the visitor as plain text; links or markup in the
+  comment are no longer rendered. The contact address is checked and the comment is limited to 2,000 characters.
+- The "search history" report can be sent again; if a mail cannot be sent, the dialog says so.
+- Failed logins: the entered user name is no longer logged, and the fail2ban filter cannot be fooled by crafted
+  user names. The fail2ban jail now reads the log of the service (it did not see any failed login before).
+- The password reset link is built from the configured public address (`FI_PUBLIC_URL`), not from the request.
+- User names and e-mail addresses are unique, independent of case (database migration V2).
+- New installations: the initial admin needs `FI_ADMIN_PASSWORD` and `FI_ADMIN_MAIL`; no password is generated or
+  logged. Generated passwords use a cryptographic random generator.
+- Operation: `SERVER_ADDRESS` lets the application listen only on the address of the reverse proxy.
+
 ## 3.0.1 (2026)
 
 ### Scientific results

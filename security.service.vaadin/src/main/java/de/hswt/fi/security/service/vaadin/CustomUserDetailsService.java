@@ -50,7 +50,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 			RegisteredUser user = optionalUser.get();
 
-			LOGGER.info("found user with username: {}", user.getUsername());
+			LOGGER.debug("found user with id {}", user.getId());
 			Collection<GrantedAuthority> grantedAuthorities = new ArrayList<>();
 			for (String authority : getUserAuthoritiesFromGroups(user)) {
 				grantedAuthorities.add(new SimpleGrantedAuthority(authority));
@@ -61,7 +61,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 			return new SpringUserWrapper(user, grantedAuthorities);
 
 		}
-		LOGGER.info("found no user with username: {}", username);
+		// The entered user name is never logged: it is unauthenticated input, and a crafted name could imitate the
+		// line that fail2ban counts (SP-20, review finding S1)
+		LOGGER.debug("found no user for the entered user name");
 		throw new UsernameNotFoundException("Username not found");
 	}
 

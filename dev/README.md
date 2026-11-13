@@ -37,8 +37,8 @@ superuser, of the application role `forident` and of the initial `admin` user.
 `-TestAdmin` (local only, never on a server) adds the administrator `test-admin@example.test` with a new random
 password on every start, written to `local-test-admin.env` next to the secrets file, and writes the password reset
 links to the log (there is no mail server locally).
-The application runs on http://localhost:8080. Log in with `admin@fi.de` and
-`FI_ADMIN_PASSWORD`. The REST API is available without login, e.g.
+The application runs on http://localhost:8080. Log in with `admin` and
+`FI_ADMIN_PASSWORD` (mail address `FI_ADMIN_MAIL` from the secrets file, default `admin@example.test`). The REST API is available without login, e.g.
 http://localhost:8080/api/substances?inchiKey=VEQOALNAAJBPNY-UHFFFAOYSA-N
 
 To run `-Init` again, drop and recreate the user database `fi-lc-users` first.

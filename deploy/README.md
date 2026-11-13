@@ -50,6 +50,10 @@ sudo mkdir -p /opt/for-ident/html /opt/for-ident/bin /etc/for-ident
   `/etc/systemd/journald.conf.d/retention.conf` with `[Journal]`, `SystemMaxUse=500M`, `MaxRetentionSec=7day`.
 - Firewall (`ufw`): incoming only 22, 80, 443 (and what other services need). Port 8080 only from the reverse
   proxy: Caddy on the host needs no rule; Caddy in Docker needs `ufw allow from <docker network> to any port 8080 proto tcp`
+  In addition (since 3.0.2) the application listens only on the address the proxy reaches it on (`SERVER_ADDRESS` in
+  the environment file): `127.0.0.1` with Caddy on the host, the gateway of the Docker bridge `docker0`
+  (usually `172.17.0.1`, the target of `host.docker.internal`) with Caddy in Docker. Health checks on the server
+  then use that address instead of `localhost`.
   (network of `docker network inspect caddy`). Without this rule Caddy answers 502.
 
 ## 5. Databases
@@ -81,7 +85,7 @@ of every table with the export. It stops if a database already exists or a count
 ### 5b. New installation without existing data
 
 Create the three databases owned by `forident`, then start the application once with the additional profile
-`initialization-lc` and `FI_ADMIN_PASSWORD` set: the schema migrations create the tables, the profile creates the
+`initialization-lc` and `FI_ADMIN_PASSWORD` and `FI_ADMIN_MAIL` set (both required since 3.0.2): the schema migrations create the tables, the profile creates the
 groups and the user `admin`. The substance data come from the database dumps of the data provider.
 
 ### Schema migrations (Flyway)

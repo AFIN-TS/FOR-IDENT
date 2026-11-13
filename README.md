@@ -75,7 +75,9 @@ Credentials and hosts are **not** stored in the property files. They are read fr
 | `FI_MAIL_HOST`, `FI_MAIL_PORT` | SMTP server (default port `25`; the GC production profile defaults to `localhost`) |
 | `FI_MAIL_USERNAME`, `FI_MAIL_PASSWORD`, `FI_MAIL_SMTP_AUTH`, `FI_MAIL_STARTTLS`, `FI_MAIL_SSL` | SMTP login of a mailbox and encryption (see `deploy/README.md`, section 8) |
 | `FI_CONTACT_ADDRESSES`, `FI_FROM_EMAIL_ADDRESS` | Contact and sender e-mail addresses |
-| `FI_ADMIN_PASSWORD` | Initial admin password (initialization profiles only, see below) |
+| `FI_ADMIN_PASSWORD`, `FI_ADMIN_MAIL` | Password and mail address of the initial admin (initialization profiles only, required there, see below) |
+| `FI_PUBLIC_URL` | Public address of the site, e.g. `https://for-ident.example.org`; links in mails (password reset) are built from it. Set it on every server |
+| `SERVER_ADDRESS` | Address the application listens on (Spring Boot); on a server only the address the reverse proxy reaches it on |
 | `FI_PATHWAY_ENABLED` | Transformation products (needs the MongoDB pathway database), default `false` |
 | `FI_SESSION_TEMP_DIRECTORY` | Root of the temporary session directories with the uploaded files, default `<java.io.tmpdir>/fi-sessions-<port>`; emptied on startup |
 | `FI_SESSION_TIMEOUT` | Session timeout, default `5m`; uploaded files are deleted when the session ends |
@@ -122,8 +124,9 @@ $env:FI_DB_USER_PASSWORD = "<password>"
 ```
 
 Spring profile **initialization** (`initialization-lc` / `initialization-gc`) creates the user **admin** on startup
-for the initial log in. Its password is taken from `FI_ADMIN_PASSWORD`. If that variable is not set, a random
-password is generated and written to the log once. Change it after the first login.
+for the initial log in. Its password is taken from `FI_ADMIN_PASSWORD` and its mail address from `FI_ADMIN_MAIL`;
+both are required, the application does not start in this profile without them (since 3.0.2). Change the password
+after the first login.
 Run the application (development mode)
 ```
 gradle bootRun -x test

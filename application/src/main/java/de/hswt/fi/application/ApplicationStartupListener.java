@@ -1,6 +1,5 @@
 package de.hswt.fi.application;
 
-import de.hswt.fi.common.PasswordGenerator;
 import de.hswt.fi.common.spring.Profiles;
 import de.hswt.fi.security.service.api.SecurityService;
 import de.hswt.fi.security.service.model.Group;
@@ -24,18 +23,15 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
-    private static final String ADMIN_PASSWORD_PROPERTY = "FI_ADMIN_PASSWORD";
+    static final String ADMIN_PASSWORD_PROPERTY = "FI_ADMIN_PASSWORD";
 
-    private static final int GENERATED_PASSWORD_LENGTH = 16;
+    static final String ADMIN_MAIL_PROPERTY = "FI_ADMIN_MAIL";
 
     private final SecurityService securityService;
 
-    private final PasswordGenerator passwordGenerator;
-
     @Autowired
-    public ApplicationStartupListener(SecurityService securityService, PasswordGenerator passwordGenerator) {
+    public ApplicationStartupListener(SecurityService securityService) {
         this.securityService = securityService;
-        this.passwordGenerator = passwordGenerator;
     }
 
     @Override
@@ -43,26 +39,37 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
         Environment environment = contextRefreshedEvent.getApplicationContext().getEnvironment();
         if (environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Profiles.INITIALIZATION_LC, Profiles.INITIALIZATION_GC))) {
             LOGGER.debug("Running application in initialization mode!");
-            initAdminAccount(securityService, getAdminPassword(environment));
+            initAdminAccount(securityService, getAdminPassword(environment), getAdminMail(environment));
         }
     }
 
     /**
-     * Returns the initial admin password from the environment variable FI_ADMIN_PASSWORD,
-     * or generates a random one and logs it once, so no default password is shipped.
+     * The initial admin password from FI_ADMIN_PASSWORD. Required: no password is generated, so none ends up in the
+     * log (SP-20, review finding S8).
      */
-    private String getAdminPassword(Environment environment) {
+    static String getAdminPassword(Environment environment) {
         String password = environment.getProperty(ADMIN_PASSWORD_PROPERTY);
-        if (password != null && !password.isEmpty()) {
-            return password;
+        if (password == null || password.isBlank()) {
+            throw new IllegalStateException(ADMIN_PASSWORD_PROPERTY
+                    + " must be set for the initialization profile (password of the initial user admin)");
         }
-        password = passwordGenerator.generatePassword(GENERATED_PASSWORD_LENGTH);
-        LOGGER.warn("No {} set, generated initial password for user 'admin': {} (change it after the first login)",
-                ADMIN_PASSWORD_PROPERTY, password);
         return password;
     }
 
-    private void initAdminAccount(SecurityService securityService, String adminPassword) {
+    /**
+     * The mail address of the initial admin from FI_ADMIN_MAIL. Required: a fixed default address would receive the
+     * password reset links of the admin (SP-20, review finding S4).
+     */
+    static String getAdminMail(Environment environment) {
+        String mail = environment.getProperty(ADMIN_MAIL_PROPERTY);
+        if (mail == null || mail.isBlank() || !mail.trim().matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) {
+            throw new IllegalStateException(ADMIN_MAIL_PROPERTY
+                    + " must be set to a valid address for the initialization profile (mail of the initial user admin)");
+        }
+        return mail.trim();
+    }
+
+    private void initAdminAccount(SecurityService securityService, String adminPassword, String adminMail) {
 
         LOGGER.debug("Creating groups and roles ...");
 
@@ -89,7 +96,7 @@ public class ApplicationStartupListener implements ApplicationListener<ContextRe
 		adminUser.setPassword(adminPassword);
 		adminUser.setFirstname("Administrator");
 		adminUser.setLastname("Administrator");
-		adminUser.setMail("admin@fi.de");
+		adminUser.setMail(adminMail);
 		adminUser.setOrganisation("");
         adminUser.addGroup(groupAdmin);
 

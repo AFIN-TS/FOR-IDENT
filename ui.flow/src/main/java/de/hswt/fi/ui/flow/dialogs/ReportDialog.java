@@ -7,9 +7,11 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldBase;
 import de.hswt.fi.mail.service.model.BasicMailTemplate;
 import de.hswt.fi.mail.service.model.EntryReportTemplate;
 import de.hswt.fi.mail.service.model.MailTemplate;
+import de.hswt.fi.mail.service.model.ReportInput;
 import de.hswt.fi.mail.service.model.SearchHistoryReportTemplate;
 import de.hswt.fi.search.service.mass.search.model.Entry;
 import de.hswt.fi.search.service.mass.search.model.SearchParameter;
@@ -68,6 +70,10 @@ public class ReportDialog extends Dialog {
 		comment.setLabel(getTranslation("ui.report.comment"));
 		comment.setWidthFull();
 		comment.setMinHeight("6rem");
+		name.setMaxLength(ReportInput.MAX_NAME_LENGTH);
+		mail.setMaxLength(ReportInput.MAX_MAIL_LENGTH);
+		organisation.setMaxLength(ReportInput.MAX_ORGANISATION_LENGTH);
+		comment.setMaxLength(ReportInput.MAX_COMMENT_LENGTH);
 		RegisteredUser user = services.security().getCurrentUser();
 		if (user != null) {
 			name.setValue(nullToEmpty(user.getUsername()));
@@ -109,13 +115,26 @@ public class ReportDialog extends Dialog {
 			UserFields.showError(getTranslation("ui.report.notConfigured"));
 			return;
 		}
+		// Checked on the server as well, the dialog is open to anonymous visitors (SP-20, S2); the templates escape
+		// every value, so the text arrives as plain text
+		String mailValue = mail.getValue() == null ? "" : mail.getValue().trim();
+		if (!ReportInput.isValidOptionalMail(mailValue)) {
+			mail.setInvalid(true);
+			mail.setErrorMessage(getTranslation("ui.validation.emailInvalid"));
+			return;
+		}
+		if (!checkLength(name, ReportInput.MAX_NAME_LENGTH)
+				|| !checkLength(organisation, ReportInput.MAX_ORGANISATION_LENGTH)
+				|| !checkLength(comment, ReportInput.MAX_COMMENT_LENGTH)) {
+			return;
+		}
 		String errorNumber = "#" + UUID.randomUUID().toString().substring(0, 8);
 		report.setUsername(name.getValue());
-		report.setEmail(mail.getValue());
+		report.setEmail(mailValue);
 		report.setOrganisation(organisation.getValue());
 		report.setComment(comment.getValue());
-		report.setMailTo("mailto:" + mail.getValue() + "?subject=Report:" + errorNumber + "&bcc="
-				+ String.join(",", services.properties().getContactAdresses()));
+		report.setMailTo(ReportInput.replyLink(mailValue, "Report:" + errorNumber,
+				services.properties().getContactAdresses()));
 		if (report.getSourceLists() == null) {
 			report.setSourceLists(List.of());
 		}
@@ -131,6 +150,15 @@ public class ReportDialog extends Dialog {
 		}
 		close();
 		UserFields.showSuccess(getTranslation("ui.report.sent"));
+	}
+
+	private boolean checkLength(TextFieldBase<?, String> field, int maxLength) {
+		if (ReportInput.isWithin(field.getValue(), maxLength)) {
+			return true;
+		}
+		field.setInvalid(true);
+		field.setErrorMessage(getTranslation("ui.validation.maxLength", maxLength));
+		return false;
 	}
 
 	private static String nullToEmpty(String value) {
